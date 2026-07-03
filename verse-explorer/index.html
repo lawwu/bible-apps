@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every Word Entwined — a Bible cross-reference explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=EB+Garamond:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-left">
+    <h1 class="wordmark">Every Word <em>Entwined</em></h1>
+    <p class="tagline">wandering the 340,000 threads that bind Scripture to itself</p>
+  </div>
+  <div class="masthead-controls">
+    <form id="search-form" autocomplete="off">
+      <input id="search-input" type="text" placeholder="A verse, word, or topic — “John 3:16”, “mercy”, “forgiveness”" spellcheck="false">
+    </form>
+    <button id="topics-btn" type="button" title="Browse topics ranked by openbible.info reader votes">Topics</button>
+    <button id="index-btn" type="button" title="Browse the anchor words of the Treasury of Scripture Knowledge">Words</button>
+    <button id="wander-btn" type="button" title="Jump to a random well-connected verse">Wander&nbsp;⟳</button>
+    <label class="threshold">
+      <span class="threshold-label">min votes <b id="threshold-value">3</b></span>
+      <input id="threshold" type="range" min="0" max="60" step="1" value="3">
+    </label>
+  </div>
+</header>
+
+<nav id="trail" class="trail" aria-label="Recently visited verses"></nav>
+
+<main class="stage">
+  <section id="graph-pane" class="graph-pane">
+    <svg id="graph" role="img" aria-label="Force-directed graph of cross-references around the selected verse"></svg>
+    <div id="tooltip" class="tooltip" hidden></div>
+    <div id="legend" class="legend"></div>
+    <div id="loading" class="loading">
+      <span class="loading-mark">✣</span>
+      <span id="loading-text">Binding 340,000 threads…</span>
+    </div>
+  </section>
+
+  <aside id="panel" class="panel">
+    <div id="panel-content"></div>
+  </aside>
+</main>
+
+<footer class="colophon">
+  Cross-reference votes and <a href="https://www.openbible.info/topics/">topics</a>
+  <a href="https://www.openbible.info/labs/cross-references/">CC-BY openbible.info</a> ·
+  anchor phrases from the Treasury of Scripture Knowledge · text KJV ·
+  underlined phrases in a verse are the words its cross-references hang on — click one to trace its thread
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
