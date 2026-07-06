@@ -293,6 +293,13 @@ body {
   margin-left: 0.2rem;
 }
 
+.related-cloud {
+  margin-bottom: 1.2rem;
+  padding-top: 0;
+}
+
+.related-cloud .index-word { font-style: italic; }
+
 .legend {
   position: absolute;
   left: 1.1rem;
