@@ -56,8 +56,8 @@ const state = {
   activeAnchor: null,  // index into anchors list of current center verse
   threshold: 3,
   trail: [],
-  maxNeighbors: 42,
-  maxWordLeaves: 80,
+  maxNeighbors: 28,
+  maxWordLeaves: 48,
 };
 
 const svg = d3.select("#graph");
@@ -249,6 +249,8 @@ function show(view, { pushTrail = true } = {}) {
     if (state.trail.length > 9) state.trail.shift();
   }
 
+  document.body.classList.toggle("no-graph", view.t === "i");
+
   if (view.t === "v") {
     const neighbors = neighborhood(view.k);
     drawGraph(view.k, neighbors);
@@ -311,7 +313,7 @@ function runSimulation(nodes, links, { linkDistance, linkStrength, charge }) {
   nodes.forEach((n, i) => {
     if (n.fx == null) {
       const angle = (i / Math.max(1, nodes.length - 1)) * 2 * Math.PI;
-      const radius = 130 + 45 * (i % 3);
+      const radius = 90 + 30 * (i % 3);
       n.x = cx + radius * Math.cos(angle);
       n.y = cy + radius * Math.sin(angle);
     }
@@ -342,16 +344,17 @@ function runSimulation(nodes, links, { linkDistance, linkStrength, charge }) {
 
   nodeSel.select("text")
     .text((d) => d.label)
-    .attr("dy", (d) => d.r + 13);
+    .attr("dy", (d) => d.r + 10);
 
   simulation = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(links).id((d) => d.id)
       .distance(linkDistance).strength(linkStrength))
     .force("charge", d3.forceManyBody().strength(charge))
-    .force("collide", d3.forceCollide().radius(26))
+    .force("collide", d3.forceCollide().radius(12))
     .force("x", d3.forceX(nodes[0].fx).strength(0.04))
     .force("y", d3.forceY(nodes[0].fy).strength(0.05))
     .alpha(1)
+    .alphaDecay(0.05)
     .on("tick", () => {
       linkSel
         .attr("x1", (d) => d.source.x).attr("y1", (d) => d.source.y)
@@ -372,27 +375,28 @@ function drawGraph(center, neighbors) {
 
   const nodes = [
     { id: center, center: true, fx: width / 2, fy: height / 2,
-      r: 24, color: sectionOf(center).color, label: shortLabel(center) },
-    ...neighbors.map((n) => ({
+      r: 15, color: sectionOf(center).color, label: shortLabel(center) },
+    ...neighbors.map((n, i) => ({
       id: n.other, votes: n.votes, span: n.span,
-      r: 6 + 9 * Math.sqrt((n.votes || 1) / maxVotes),
-      color: sectionOf(n.other).color, label: shortLabel(n.other),
+      r: 3.5 + 6.5 * Math.sqrt((n.votes || 1) / maxVotes),
+      color: sectionOf(n.other).color,
+      label: i < 8 ? shortLabel(n.other) : "",
     })),
   ];
   const links = [
     ...neighbors.map((n) => ({
       source: center, target: n.other, votes: n.votes,
       cross: isNT(center) !== isNT(n.other),
-      width: 0.8 + 2.6 * Math.sqrt(n.votes / maxVotes),
+      width: 0.7 + 2 * Math.sqrt(n.votes / maxVotes),
       opacity: 0.28 + 0.4 * (n.votes / maxVotes),
     })),
-    ...peripheralLinks(center, neighbors).map((l) => ({ ...l, width: 0.7, opacity: 0.25 })),
+    ...peripheralLinks(center, neighbors).map((l) => ({ ...l, width: 0.6, opacity: 0.22 })),
   ];
 
   const { linkSel, nodeSel } = runSimulation(nodes, links, {
-    linkDistance: (d) => d.peripheral ? 120 : 90 + 190 * (1 - d.votes / maxVotes),
+    linkDistance: (d) => d.peripheral ? 85 : 55 + 95 * (1 - d.votes / maxVotes),
     linkStrength: (d) => d.peripheral ? 0.05 : 0.4,
-    charge: -360,
+    charge: -140,
   });
 
   nodeSel
@@ -439,9 +443,9 @@ function drawWordGraph(word) {
 
   const nodes = [
     { id: "w", center: true, word: true, fx: width / 2, fy: height / 2,
-      r: 26, color: "#241d12", label: `“${word}”` },
+      r: 15, color: "#241d12", label: `“${word}”` },
     ...verses.map((v) => ({
-      id: v, r: 7, color: sectionOf(v).color, label: shortLabel(v),
+      id: v, r: 4, color: sectionOf(v).color, label: "",
     })),
   ];
   const links = verses.map((v) => ({
@@ -449,9 +453,9 @@ function drawWordGraph(word) {
   }));
 
   const { nodeSel } = runSimulation(nodes, links, {
-    linkDistance: 150 + Math.min(verses.length, 60),
+    linkDistance: 85 + Math.min(verses.length, 40),
     linkStrength: 0.25,
-    charge: -180,
+    charge: -70,
   });
 
   nodeSel
@@ -470,12 +474,13 @@ function drawTopicGraph(topic) {
 
   const nodes = [
     { id: "t", center: true, word: true, fx: width / 2, fy: height / 2,
-      r: 26, color: "#8b2a1d",
-      label: topic.length > 28 ? topic.slice(0, 26) + "…" : topic },
-    ...passages.map((p) => ({
+      r: 15, color: "#8b2a1d",
+      label: topic.length > 24 ? topic.slice(0, 22) + "…" : topic },
+    ...passages.map((p, i) => ({
       id: p.t, span: p.span, votes: p.votes,
-      r: 6 + 9 * Math.sqrt(p.votes / maxVotes),
-      color: sectionOf(p.t).color, label: shortLabel(p.t),
+      r: 3.5 + 6 * Math.sqrt(p.votes / maxVotes),
+      color: sectionOf(p.t).color,
+      label: i < 6 ? shortLabel(p.t) : "",
     })),
   ];
   const links = passages.map((p) => ({
@@ -485,9 +490,9 @@ function drawTopicGraph(topic) {
   }));
 
   const { nodeSel } = runSimulation(nodes, links, {
-    linkDistance: (d) => 110 + 170 * (1 - d.width / 2.6),
+    linkDistance: (d) => 60 + 95 * (1 - d.width / 2.6),
     linkStrength: 0.3,
-    charge: -200,
+    charge: -80,
   });
 
   nodeSel
@@ -624,7 +629,7 @@ function drawVersePanel(center, neighbors) {
 
   const panel = document.getElementById("panel-content");
   panel.innerHTML = html;
-  document.getElementById("panel").scrollTop = 0;
+  window.scrollTo({ top: 0 });
 
   panel.querySelectorAll(".conn").forEach((el) => {
     const id = +el.dataset.id;
@@ -693,7 +698,7 @@ function drawWordPanel(word) {
 
   const panel = document.getElementById("panel-content");
   panel.innerHTML = html;
-  document.getElementById("panel").scrollTop = 0;
+  window.scrollTo({ top: 0 });
   panel.querySelectorAll(".conn").forEach((el) => {
     el.addEventListener("click", () => show({ t: "v", k: +el.dataset.id }));
   });
@@ -751,7 +756,7 @@ function drawTopicPanel(topic) {
 
   const panel = document.getElementById("panel-content");
   panel.innerHTML = html;
-  document.getElementById("panel").scrollTop = 0;
+  window.scrollTo({ top: 0 });
   panel.querySelectorAll(".conn").forEach((el) => {
     el.addEventListener("click", () => show({ t: "v", k: +el.dataset.id }));
   });
@@ -804,7 +809,7 @@ function drawIndexPanel(kind = "words") {
 
   const panel = document.getElementById("panel-content");
   panel.innerHTML = html;
-  document.getElementById("panel").scrollTop = 0;
+  window.scrollTo({ top: 0 });
 
   const cloud = panel.querySelector(".index-cloud");
   cloud.addEventListener("click", (e) => {
