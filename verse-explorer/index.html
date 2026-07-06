@@ -31,21 +31,24 @@
 
 <nav id="trail" class="trail" aria-label="Recently visited verses"></nav>
 
-<main class="stage">
-  <section id="graph-pane" class="graph-pane">
-    <svg id="graph" role="img" aria-label="Force-directed graph of cross-references around the selected verse"></svg>
-    <div id="tooltip" class="tooltip" hidden></div>
-    <div id="legend" class="legend"></div>
-    <div id="loading" class="loading">
-      <span class="loading-mark">✣</span>
-      <span id="loading-text">Binding 340,000 threads…</span>
-    </div>
-  </section>
-
-  <aside id="panel" class="panel">
+<main class="page">
+  <article class="content">
     <div id="panel-content"></div>
+  </article>
+
+  <aside class="map" aria-label="Connection map">
+    <div id="graph-pane" class="graph-pane">
+      <svg id="graph" role="img" aria-label="Map of cross-references around the current selection"></svg>
+      <div id="tooltip" class="tooltip" hidden></div>
+    </div>
+    <div id="legend" class="legend"></div>
   </aside>
 </main>
+
+<div id="loading" class="loading">
+  <span class="loading-mark">✣</span>
+  <span id="loading-text">Binding 340,000 threads…</span>
+</div>
 
 <footer class="colophon">
   Cross-reference votes and <a href="https://www.openbible.info/topics/">topics</a>
