@@ -25,6 +25,7 @@ in bbcccvvv form), and a KJV JSON dump:
 ```sh
 curl -sL -o /tmp/kjv.json https://raw.githubusercontent.com/scrollmapper/bible_databases/master/formats/json/KJV.json
 python3 scripts/build_data.py /tmp/kjv.json
+uv run --with sentence-transformers --with "numpy<2" python3 scripts/build_related.py
 ```
 
 Edges with negative votes are dropped; TSK reference pairs missing from the
@@ -56,7 +57,12 @@ show the full range text.
   shows its top passages by votes; click one to enter its cross-reference
   neighborhood. Search accepts topics too. The word index likewise lists every
   anchor phrase recurring in 3+ verses.
-- **Wander** — jump to a random well-connected verse.
+- **Related topics by meaning** — every topic page shows its nearest topics
+  in embedding space (all-MiniLM-L6-v2 over topic names, precomputed into
+  `data/related.json` by `scripts/build_related.py`), so "anxiety" links to
+  "worry and stress", "nervousness", and "panic attacks" even with no words
+  in common. Search falls back to stem matching, so "anxiousness" lands on
+  "anxiety".
 
 ## Data credits
 

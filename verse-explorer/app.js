@@ -51,6 +51,7 @@ const state = {
   anchors: new Map(),  // verse index -> [{word, targets: [{t, span}]}]
   wordIndex: new Map(),// normalized word -> [verse index...]
   topics: new Map(),   // topic -> [{t, span, votes}] sorted by votes desc
+  related: new Map(),  // topic -> [[topic, simPct], ...] embedding neighbors
   view: null,          // {t:'v',k:verseIdx} | {t:'w',k:word} | {t:'t',k:topic} | {t:'i',k:'words'|'topics'}
   activeAnchor: null,  // index into anchors list of current center verse
   threshold: 3,
@@ -145,11 +146,12 @@ function edgeVotesFor(center) {
 /* ---------- data loading ---------- */
 
 async function load() {
-  const [verses, edges, anchorsRaw, topicsRaw] = await Promise.all([
+  const [verses, edges, anchorsRaw, topicsRaw, relatedRaw] = await Promise.all([
     fetch("data/verses.json").then((r) => r.json()),
     fetch("data/edges.json").then((r) => r.json()),
     fetch("data/anchors.json").then((r) => r.json()),
     fetch("data/topics.json").then((r) => r.json()),
+    fetch("data/related.json").then((r) => r.json()).catch(() => null),
   ]);
   state.ids = verses.ids;
   state.texts = verses.texts;
@@ -176,9 +178,15 @@ async function load() {
     state.topics.set(topic, rows.map(([t, span, votes]) => ({ t, span, votes })));
   }
 
+  if (relatedRaw) {
+    relatedRaw.names.forEach((name, i) => {
+      state.related.set(name, relatedRaw.nn[i].map(([j, sim]) => [relatedRaw.names[j], sim]));
+    });
+  }
+
   document.getElementById("loading").classList.add("done");
   buildLegend();
-  navigateFromHash() || show({ t: "v", k: state.idIndex.get("Gen.1.1") });
+  navigateFromHash() || show({ t: "i", k: "topics" });
 }
 
 function buildWordIndex() {
@@ -713,8 +721,19 @@ function drawTopicPanel(topic) {
       Topic · openbible.info topical bible</div>
     <h2 class="verse-ref">${esc(topic)}</h2>
     <p class="verse-stats">${passages.length} passages, ranked by ${fmtVotes(topicVotesTotal(passages))} reader votes.
-      Click a passage to enter its cross-reference neighborhood.</p>
-    <div class="connections-heading">Passages · by votes</div>`;
+      Click a passage to enter its cross-reference neighborhood.</p>`;
+
+  const related = state.related.get(topic) || [];
+  if (related.length) {
+    html += `
+      <div class="connections-heading">Related topics · by meaning</div>
+      <div class="index-cloud related-cloud">` +
+      related.map(([name, sim]) =>
+        `<button class="index-word" data-t="${esc(name)}">${esc(name)} <span class="index-count">${sim}%</span></button>`
+      ).join("") + `</div>`;
+  }
+
+  html += `<div class="connections-heading">Passages · by votes</div>`;
 
   for (const p of passages) {
     const sec = sectionOf(p.t);
@@ -735,6 +754,9 @@ function drawTopicPanel(topic) {
   document.getElementById("panel").scrollTop = 0;
   panel.querySelectorAll(".conn").forEach((el) => {
     el.addEventListener("click", () => show({ t: "v", k: +el.dataset.id }));
+  });
+  panel.querySelectorAll(".related-cloud .index-word").forEach((el) => {
+    el.addEventListener("click", () => show({ t: "t", k: el.dataset.t }));
   });
 }
 
@@ -865,6 +887,30 @@ function parseRef(input) {
          state.idIndex.get(`${book}.1.1`);
 }
 
+function stemToken(t) {
+  return t.replace(/(iness|ness|ously|ious|ies|ily|ing|ous|ety|ed|es|ty|y|s)$/, "");
+}
+
+function fuzzyTopicMatch(q) {
+  const qStems = q.split(/\s+/).map(stemToken).filter((s) => s.length >= 3);
+  if (!qStems.length) return null;
+  let best = null, bestScore = 0;
+  for (const [topic, rows] of state.topics) {
+    const tStems = topic.split(/\s+/).map(stemToken);
+    let hits = 0;
+    for (const qs of qStems) {
+      if (tStems.some((ts) => ts.length >= 3 &&
+          (ts.startsWith(qs) || qs.startsWith(ts)) &&
+          Math.min(ts.length, qs.length) >= 4)) hits++;
+    }
+    if (hits === qStems.length) {
+      const score = 1e9 / (topic.length + 1) + topicVotesTotal(rows) / 1e6;
+      if (score > bestScore) { bestScore = score; best = topic; }
+    }
+  }
+  return best;
+}
+
 document.getElementById("search-form").addEventListener("submit", (e) => {
   e.preventDefault();
   const input = document.getElementById("search-input");
@@ -890,19 +936,15 @@ document.getElementById("search-form").addEventListener("submit", (e) => {
       .sort((a, b) => state.wordIndex.get(b).length - state.wordIndex.get(a).length);
     if (wordMatches.length) { show({ t: "w", k: wordMatches[0] }); return; }
   }
+  if (q) {
+    const fuzzy = fuzzyTopicMatch(q);
+    if (fuzzy) { show({ t: "t", k: fuzzy }); return; }
+  }
   input.placeholder = "Nothing found — try “Rom 8:28”, “mercy”, or “forgiveness”";
 });
 
 document.getElementById("index-btn").addEventListener("click", () => show({ t: "i", k: "words" }));
 document.getElementById("topics-btn").addEventListener("click", () => show({ t: "i", k: "topics" }));
-
-document.getElementById("wander-btn").addEventListener("click", () => {
-  const wellConnected = [];
-  for (const [idx, list] of state.adj) {
-    if (list.length >= 40) wellConnected.push(idx);
-  }
-  show({ t: "v", k: wellConnected[Math.floor(Math.random() * wellConnected.length)] });
-});
 
 const thresholdInput = document.getElementById("threshold");
 thresholdInput.addEventListener("input", () => {
