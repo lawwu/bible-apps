@@ -1,0 +1,295 @@
+:root {
+  --paper: #f7f1e3;
+  --ink: #241d12;
+  --ink-soft: #5c5240;
+  --ink-faint: #8d8064;
+  --oxblood: #8b2a1d;
+  --gold: #a97d1c;
+  --gold-soft: #e9d9ae;
+  --hairline: rgba(36, 29, 18, 0.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 252, 242, 0.9), transparent 60%),
+    radial-gradient(ellipse 100% 100% at 100% 120%, rgba(169, 125, 28, 0.08), transparent 55%);
+  color: var(--ink);
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 17px;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding: 1.1rem 1.6rem 0.9rem;
+  border-bottom: 1px solid var(--ink);
+  flex-wrap: wrap;
+}
+
+.wordmark {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.9rem;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.wordmark a { color: var(--ink-faint); text-decoration: none; font-weight: 400; }
+.wordmark a:hover { color: var(--oxblood); }
+.wordmark em { font-style: italic; font-weight: 400; color: var(--oxblood); }
+
+.tagline {
+  margin-top: 0.3rem;
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.crumbs { display: flex; gap: 0.4rem; align-items: center; font-size: 0.9rem; }
+.crumbs a {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 0.85rem;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid var(--ink);
+  padding: 0.4rem 0.85rem;
+}
+.crumbs a:hover { background: var(--oxblood); border-color: var(--oxblood); color: var(--paper); }
+
+/* ---------- main ---------- */
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.8rem 1.6rem 4rem;
+}
+
+.loading-note { font-style: italic; color: var(--ink-faint); padding: 2rem 0; }
+
+.page-kicker {
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.4rem;
+}
+
+.page-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 2.2rem;
+  line-height: 1.05;
+  margin-bottom: 0.5rem;
+}
+
+.page-note {
+  font-style: italic;
+  color: var(--ink-soft);
+  max-width: 62ch;
+  margin-bottom: 1.6rem;
+}
+
+.page-note a { color: var(--oxblood); }
+
+/* coverage grid */
+
+.testament-label {
+  font-family: "Fraunces", serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 1.4rem 0 0.6rem;
+}
+
+.book-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.14rem 0;
+}
+
+.book-name {
+  width: 130px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.book-name b { color: var(--ink); font-weight: 600; font-family: "Fraunces", serif; font-size: 0.85rem; }
+
+.chapter-cells { display: flex; flex-wrap: wrap; gap: 2px; }
+
+.chapter-cell {
+  width: 13px;
+  height: 13px;
+  border: 0.5px solid var(--hairline);
+  background: rgba(255, 253, 246, 0.6);
+  cursor: default;
+}
+
+.chapter-cell.has { cursor: pointer; }
+.chapter-cell.has:hover { outline: 1.5px solid var(--ink); }
+
+.grid-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.6rem 0 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* sermon lists */
+
+.sermon-row {
+  display: block;
+  padding: 0.85rem 0.8rem;
+  margin: 0 -0.8rem;
+  border-bottom: 1px solid var(--hairline);
+  text-decoration: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.sermon-row:hover { background: rgba(169, 125, 28, 0.09); }
+
+.sermon-meta {
+  font-family: "Fraunces", serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--oxblood);
+  margin-bottom: 0.15rem;
+}
+
+.sermon-title { font-size: 1.1rem; line-height: 1.4; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border: 1px dotted var(--gold);
+  padding: 0.08rem 0.45rem;
+  margin-left: 0.5rem;
+  vertical-align: 2px;
+}
+
+/* sermon detail */
+
+.watch {
+  display: flex;
+  gap: 1.4rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 1.2rem 0 1.6rem;
+}
+
+.thumb {
+  width: 300px;
+  max-width: 100%;
+  border: 1px solid var(--ink);
+  display: block;
+}
+
+.watch-info { flex: 1; min-width: 240px; }
+
+.watch-link {
+  display: inline-block;
+  font-family: "Fraunces", serif;
+  font-size: 0.95rem;
+  color: var(--paper);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.watch-link:hover { background: var(--oxblood); border-color: var(--oxblood); }
+
+.watch-info p { color: var(--ink-soft); font-style: italic; margin-bottom: 0.4rem; }
+
+.cites-heading {
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 1.4rem 0 0.7rem;
+}
+
+.cite-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--hairline);
+  max-width: 640px;
+}
+
+.cite-time {
+  font-family: "Fraunces", serif;
+  font-size: 0.85rem;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 0.1rem 0.5rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cite-time:hover { background: var(--oxblood); }
+
+.cite-ref {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.cite-ref:hover { color: var(--oxblood); }
+
+.cite-text {
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-note { font-style: italic; color: var(--ink-faint); padding: 0.8rem 0; }
+
+/* ---------- colophon ---------- */
+
+.colophon {
+  padding: 0.6rem 1.6rem;
+  border-top: 1px solid var(--ink);
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.colophon a { color: var(--oxblood); }
+
+@media (max-width: 640px) {
+  .book-name { width: 92px; font-size: 0.8rem; }
+  .chapter-cell { width: 11px; height: 11px; }
+  .cite-text { display: none; }
+}

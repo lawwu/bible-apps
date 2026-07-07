@@ -65,6 +65,13 @@ show the full range text.
   in common. Search falls back to stem matching, so "anxiousness" lands on
   "anxiety".
 
+- **People** — the "People" button indexes 3,067 people from the Theographic
+  Bible Metadata; person pages list every verse they appear in, and verse pages
+  show "People here" chips. Search finds people by name (`build_people.py`).
+- **Preached at Berean** — verse pages list sermons from Berean Community
+  Church that read or cite the verse, deep-linked to the moment in the video
+  (built by `../preached/scripts/build_sermons.py`).
+
 ## Data credits
 
 - Cross references and votes: [openbible.info](https://www.openbible.info/labs/cross-references/),
@@ -73,5 +80,7 @@ show the full range text.
   CC-BY; each topic's passages capped at the top 40 by votes.
 - Anchor phrases: Treasury of Scripture Knowledge (public domain),
   tab-delimited developer export (`tsk/tskxref.txt`).
+- People: [Theographic Bible Metadata](https://github.com/robertrouse/theographic-bible-metadata), CC BY-SA 4.0.
+- Sermons: [Berean Community Church](https://bereancc.com/), transcripts via the berean_transcripts pipeline.
 - Text: King James Version via
   [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases).

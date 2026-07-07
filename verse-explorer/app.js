@@ -52,6 +52,11 @@ const state = {
   wordIndex: new Map(),// normalized word -> [verse index...]
   topics: new Map(),   // topic -> [{t, span, votes}] sorted by votes desc
   related: new Map(),  // topic -> [[topic, simPct], ...] embedding neighbors
+  people: [],          // [{key, display, verses: [vIdx...]}] by verse count desc
+  peopleByKey: new Map(),
+  peopleByVerse: new Map(),
+  sermons: [],         // [[title, date, url], ...]
+  preached: new Map(), // verse index -> [[sermonIdx, seconds], ...]
   view: null,          // {t:'v',k:verseIdx} | {t:'w',k:word} | {t:'t',k:topic} | {t:'i',k:'words'|'topics'}
   activeAnchor: null,  // index into anchors list of current center verse
   threshold: 3,
@@ -146,12 +151,14 @@ function edgeVotesFor(center) {
 /* ---------- data loading ---------- */
 
 async function load() {
-  const [verses, edges, anchorsRaw, topicsRaw, relatedRaw] = await Promise.all([
+  const [verses, edges, anchorsRaw, topicsRaw, relatedRaw, peopleRaw, preachedRaw] = await Promise.all([
     fetch("data/verses.json").then((r) => r.json()),
     fetch("data/edges.json").then((r) => r.json()),
     fetch("data/anchors.json").then((r) => r.json()),
     fetch("data/topics.json").then((r) => r.json()),
     fetch("data/related.json").then((r) => r.json()).catch(() => null),
+    fetch("data/people.json").then((r) => r.json()).catch(() => null),
+    fetch("data/preached.json").then((r) => r.json()).catch(() => null),
   ]);
   state.ids = verses.ids;
   state.texts = verses.texts;
@@ -184,6 +191,24 @@ async function load() {
     });
   }
 
+  if (peopleRaw) {
+    peopleRaw.people.forEach(([key, display, vs], i) => {
+      state.people.push({ key, display, verses: vs });
+      state.peopleByKey.set(key, i);
+      for (const v of vs) {
+        if (!state.peopleByVerse.has(v)) state.peopleByVerse.set(v, []);
+        state.peopleByVerse.get(v).push(i);
+      }
+    });
+  }
+
+  if (preachedRaw) {
+    state.sermons = preachedRaw.sermons;
+    for (const [v, list] of Object.entries(preachedRaw.cites)) {
+      state.preached.set(+v, list);
+    }
+  }
+
   document.getElementById("loading").classList.add("done");
   buildLegend();
   navigateFromHash() || show({ t: "i", k: "topics" });
@@ -211,7 +236,10 @@ function hashFor(view) {
   if (view.t === "v") return state.ids[view.k];
   if (view.t === "w") return "w:" + encodeURIComponent(view.k);
   if (view.t === "t") return "t:" + encodeURIComponent(view.k);
-  return view.k === "topics" ? "topics" : "words";
+  if (view.t === "p") return "p:" + encodeURIComponent(view.k);
+  if (view.k === "topics") return "topics";
+  if (view.k === "people") return "people";
+  return "words";
 }
 
 function navigateFromHash() {
@@ -219,6 +247,12 @@ function navigateFromHash() {
   if (!h) return false;
   if (h === "index" || h === "words") { show({ t: "i", k: "words" }); return true; }
   if (h === "topics") { show({ t: "i", k: "topics" }); return true; }
+  if (h === "people") { show({ t: "i", k: "people" }); return true; }
+  if (h.startsWith("p:")) {
+    const p = decodeURIComponent(h.slice(2));
+    if (state.peopleByKey.has(p)) { show({ t: "p", k: p }); return true; }
+    return false;
+  }
   if (h.startsWith("w:")) {
     const w = decodeURIComponent(h.slice(2));
     if (state.wordIndex.has(w)) { show({ t: "w", k: w }); return true; }
@@ -261,6 +295,9 @@ function show(view, { pushTrail = true } = {}) {
   } else if (view.t === "t") {
     drawTopicGraph(view.k);
     drawTopicPanel(view.k);
+  } else if (view.t === "p") {
+    drawPersonGraph(view.k);
+    drawPersonPanel(view.k);
   } else {
     drawIndexPanel(view.k);
   }
@@ -580,6 +617,32 @@ function drawVersePanel(center, neighbors) {
       `${anchors.length} anchor phrase${anchors.length === 1 ? "" : "s"} from the Treasury of Scripture Knowledge — click one to trace its thread. ` : ""}
     ${voted} voted connection${voted === 1 ? "" : "s"}; graph shows ${neighbors.length} with ≥${state.threshold} votes, ${crossCount} crossing the Testaments.</p>`;
 
+  const folks = state.peopleByVerse.get(center) || [];
+  if (folks.length) {
+    html += `
+      <div class="connections-heading">People here</div>
+      <div class="index-cloud related-cloud">` +
+      folks.map((pi) => {
+        const p = state.people[pi];
+        return `<button class="index-word" data-p="${esc(p.key)}">${esc(p.display)} <span class="index-count">${p.verses.length}</span></button>`;
+      }).join("") + `</div>`;
+  }
+
+  const sermons = state.preached.get(center) || [];
+  if (sermons.length) {
+    html += `
+      <div class="connections-heading">Preached at Berean</div>
+      <div class="sermon-list">` +
+      sermons.slice(0, 6).map(([si, sec]) => {
+        const [title, date, url] = state.sermons[si];
+        const t = url + (url.includes("?") ? "&" : "?") + "t=" + sec + "s";
+        const mm = Math.floor(sec / 60), ss = String(sec % 60).padStart(2, "0");
+        return `<a class="sermon-item" href="${esc(t)}" target="_blank" rel="noopener">
+          <span class="sermon-date">${esc(date)}${sec ? ` · at ${mm}:${ss}` : ""}</span>
+          ${esc(title)}</a>`;
+      }).join("") + `</div>`;
+  }
+
   const covered = new Set();
 
   const connCard = (t, span, anchorless = false) => {
@@ -638,6 +701,10 @@ function drawVersePanel(center, neighbors) {
       gNodes.selectAll("g.node").classed("dimmed", (d) => !d.center && d.id !== id);
     });
     el.addEventListener("mouseleave", () => applyAnchorDim());
+  });
+
+  panel.querySelectorAll(".index-word[data-p]").forEach((el) => {
+    el.addEventListener("click", () => show({ t: "p", k: el.dataset.p }));
   });
 
   panel.querySelectorAll(".anchor, .anchor-chip, .anchor-word[data-ai]").forEach((el) => {
@@ -765,6 +832,73 @@ function drawTopicPanel(topic) {
   });
 }
 
+/* ---------- graph & panel: person mode ---------- */
+
+function personOf(key) { return state.people[state.peopleByKey.get(key)]; }
+
+function drawPersonGraph(key) {
+  const { width, height } = svg.node().getBoundingClientRect();
+  const p = personOf(key);
+  const verses = p.verses.slice(0, state.maxWordLeaves);
+
+  const nodes = [
+    { id: "p", center: true, word: true, fx: width / 2, fy: height / 2,
+      r: 15, color: "#63417a",
+      label: p.display.length > 24 ? p.display.slice(0, 22) + "…" : p.display },
+    ...verses.map((v) => ({ id: v, r: 4, color: sectionOf(v).color, label: "" })),
+  ];
+  const links = verses.map((v) => ({ source: "p", target: v, width: 0.7, opacity: 0.3 }));
+
+  const { nodeSel } = runSimulation(nodes, links, {
+    linkDistance: 85 + Math.min(verses.length, 40),
+    linkStrength: 0.25,
+    charge: -70,
+  });
+
+  nodeSel
+    .on("click", (_, d) => { if (!d.word) show({ t: "v", k: d.id }); })
+    .on("mouseenter", (event, d) => { if (!d.word) showTooltip(event, d, null); })
+    .on("mousemove", (event, d) => { if (!d.word) showTooltip(event, d, null); })
+    .on("mouseleave", () => { tooltip.hidden = true; });
+}
+
+function drawPersonPanel(key) {
+  const p = personOf(key);
+  const shown = p.verses.slice(0, 200);
+  const nameToken = p.display.split(/[ (]/)[0];
+  const re = new RegExp("\\b" + nameToken.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[a-z']*", "gi");
+
+  let html = `
+    <div class="verse-kicker"><span class="section-dot" style="background:#63417a"></span>
+      Person · Theographic Bible metadata</div>
+    <h2 class="verse-ref">${esc(p.display)}</h2>
+    <p class="verse-stats">Appears in ${p.verses.length.toLocaleString()} verse${p.verses.length === 1 ? "" : "s"}${p.verses.length > state.maxWordLeaves ? ` — graph shows the first ${state.maxWordLeaves}` : ""}.
+      Click a verse to enter its cross-reference neighborhood.</p>
+    <div class="connections-heading">Verses · in canonical order</div>`;
+
+  for (const v of shown) {
+    const sec = sectionOf(v);
+    const marked = esc(state.texts[v]).replace(re, (m) => `<mark>${m}</mark>`);
+    html += `
+      <div class="conn" data-id="${v}">
+        <div class="conn-head">
+          <span class="conn-ref"><span class="section-dot" style="background:${sec.color}"></span>${esc(refLabel(v))}</span>
+        </div>
+        <div class="conn-text">${marked}</div>
+      </div>`;
+  }
+  if (p.verses.length > shown.length) {
+    html += `<p class="empty-note">…and ${p.verses.length - shown.length} more.</p>`;
+  }
+
+  const panel = document.getElementById("panel-content");
+  panel.innerHTML = html;
+  window.scrollTo({ top: 0 });
+  panel.querySelectorAll(".conn").forEach((el) => {
+    el.addEventListener("click", () => show({ t: "v", k: +el.dataset.id }));
+  });
+}
+
 /* ---------- panel: word & topic indexes ---------- */
 
 function drawIndexPanel(kind = "words") {
@@ -781,6 +915,17 @@ function drawIndexPanel(kind = "words") {
     blurb = `openbible.info readers voted on which passages best answer
       ${entries.length.toLocaleString()} topics — all of them are below, most-voted first.
       Click one to see its passages.`;
+  } else if (kind === "people") {
+    kicker = "People index";
+    heading = "Start from a person";
+    dot = "#63417a";
+    placeholder = "Filter people…";
+    entries = state.people.map((p) => ({
+      key: p.key, label: p.display, count: p.verses.length, view: { t: "p", k: p.key },
+    }));
+    blurb = `Every named person the Theographic Bible metadata links to the text —
+      ${entries.length.toLocaleString()} people, ordered by how many verses they appear in.
+      Click one to see their verses.`;
   } else {
     kicker = "Word index";
     heading = "Start from a word";
@@ -848,7 +993,8 @@ function drawTrail() {
     const b = document.createElement("button");
     b.className = "trail-crumb" + (sameView(view, state.view) ? " current" : "");
     b.textContent = view.t === "v" ? refLabel(view.k)
-                  : view.t === "w" ? `“${view.k}”` : `✦ ${view.k}`;
+                  : view.t === "w" ? `“${view.k}”`
+                  : view.t === "p" ? personOf(view.k).display : `✦ ${view.k}`;
     b.addEventListener("click", () => show(view, { pushTrail: false }));
     nav.appendChild(b);
   });
@@ -926,6 +1072,9 @@ document.getElementById("search-form").addEventListener("submit", (e) => {
   if (idx != null) { show({ t: "v", k: idx }); return; }
 
   const q = raw.toLowerCase().trim();
+  const personExact = state.people.find((p) => p.display.toLowerCase() === q);
+  if (personExact) { show({ t: "p", k: personExact.key }); return; }
+
   if (state.topics.has(q)) { show({ t: "t", k: q }); return; }
 
   const word = normWord(raw);
@@ -941,6 +1090,10 @@ document.getElementById("search-form").addEventListener("submit", (e) => {
       .sort((a, b) => state.wordIndex.get(b).length - state.wordIndex.get(a).length);
     if (wordMatches.length) { show({ t: "w", k: wordMatches[0] }); return; }
   }
+  if (q && q.length >= 3) {
+    const person = state.people.find((p) => p.display.toLowerCase().includes(q));
+    if (person) { show({ t: "p", k: person.key }); return; }
+  }
   if (q) {
     const fuzzy = fuzzyTopicMatch(q);
     if (fuzzy) { show({ t: "t", k: fuzzy }); return; }
@@ -950,6 +1103,7 @@ document.getElementById("search-form").addEventListener("submit", (e) => {
 
 document.getElementById("index-btn").addEventListener("click", () => show({ t: "i", k: "words" }));
 document.getElementById("topics-btn").addEventListener("click", () => show({ t: "i", k: "topics" }));
+document.getElementById("people-btn").addEventListener("click", () => show({ t: "i", k: "people" }));
 
 const thresholdInput = document.getElementById("threshold");
 thresholdInput.addEventListener("input", () => {
