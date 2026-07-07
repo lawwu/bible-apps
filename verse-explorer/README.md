@@ -8,7 +8,8 @@ connect Scripture to itself.
 ## Run
 
 ```sh
-python3 -m http.server 8742 --directory verse-explorer
+python3 -m http.server 8742
+# from the repo root — the explorer is at http://localhost:8742/verse-explorer/
 # then open http://localhost:8742
 ```
 

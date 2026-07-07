@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Line of Kings — a timeline of Israel &amp; Judah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=EB+Garamond:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-left">
+    <h1 class="wordmark"><a href="../">Bible apps</a> · The Line of <em>Kings</em></h1>
+    <p class="tagline">four centuries, two kingdoms, forty-two thrones — untangled</p>
+  </div>
+  <nav class="views" aria-label="Timeline range presets">
+    <button data-range="1060,555" class="active">The whole story</button>
+    <button data-range="940,715">Divided kingdom</button>
+    <button data-range="730,580">Judah alone</button>
+  </nav>
+</header>
+
+<section class="legend-bar">
+  <span class="legend-item"><span class="swatch" style="background:#5f7134"></span>did right in the eyes of the LORD</span>
+  <span class="legend-item"><span class="swatch" style="background:#a97d1c"></span>started well, ended badly</span>
+  <span class="legend-item"><span class="swatch" style="background:#8b2a1d"></span>did evil in the eyes of the LORD</span>
+  <span class="legend-item"><span class="swatch" style="background:#2f4b7c"></span>prophet (¶ = wrote a book)</span>
+  <span class="legend-item"><span class="swatch swatch-hatch"></span>co-regency with predecessor</span>
+  <span class="legend-hint">drag to pan · scroll to zoom · click anything for its story</span>
+</section>
+
+<main class="chart-wrap">
+  <svg id="chart" role="img" aria-label="Timeline of the kings of Israel and Judah, their prophets, and key events, 1050 to 560 BC"></svg>
+  <div id="tooltip" class="tooltip" hidden></div>
+</main>
+
+<section id="detail" class="detail">
+  <p class="detail-hint">Click a king, prophet, or event above to read its story here.
+    Passage links open in the cross-reference explorer.</p>
+</section>
+
+<footer class="colophon">
+  Dates follow the ESV Global Study Bible charts
+  (<a href="https://www.esv.org/resources/esv-global-study-bible/chart-11-03a/">kings of Judah</a>,
+  <a href="https://www.esv.org/resources/esv-global-study-bible/chart-11-03b/">kings of Israel</a>,
+  <a href="https://www.esv.org/resources/esv-global-study-bible/chart-11-02/">evaluations</a>) —
+  approximate, with co-regencies shown hatched · 1–2 Kings was compiled during the exile (~550 BC),
+  1–2 Chronicles after the return (~450 BC) ·
+  part of <a href="../">Bible apps</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
