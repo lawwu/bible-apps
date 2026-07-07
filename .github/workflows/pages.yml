@@ -1,10 +1,12 @@
-name: Deploy verse-explorer to Pages
+name: Deploy site to Pages
 
 on:
   push:
     branches: ["main"]
     paths:
+      - "index.html"
       - "verse-explorer/**"
+      - "kings-timeline/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -25,9 +27,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Assemble site
+        run: |
+          mkdir dist
+          cp index.html dist/
+          cp -r verse-explorer dist/
+          cp -r kings-timeline dist/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: verse-explorer
+          path: dist
       - id: deployment
         uses: actions/deploy-pages@v4

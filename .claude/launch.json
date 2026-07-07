@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "verse-explorer",
+      "name": "bible-apps",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8743", "--directory", "verse-explorer"],
+      "runtimeArgs": ["-m", "http.server", "8743"],
       "port": 8743
     }
   ]

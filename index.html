@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bible apps — explorations in Scripture data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=EB+Garamond:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f7f1e3;
+  --ink: #241d12;
+  --ink-soft: #5c5240;
+  --ink-faint: #8d8064;
+  --oxblood: #8b2a1d;
+  --gold: #a97d1c;
+  --gold-soft: #e9d9ae;
+  --hairline: rgba(36, 29, 18, 0.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 252, 242, 0.9), transparent 60%),
+    radial-gradient(ellipse 100% 100% at 100% 120%, rgba(169, 125, 28, 0.08), transparent 55%);
+  color: var(--ink);
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 18px;
+}
+.hero {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 5rem 2rem 2.5rem;
+  text-align: center;
+}
+.hero h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 3.2rem;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+.hero h1 em { font-style: italic; font-weight: 400; color: var(--oxblood); }
+.hero p {
+  margin-top: 1rem;
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+}
+.rule {
+  width: 72px;
+  margin: 2rem auto 0;
+  border: none;
+  border-top: 1px solid var(--ink);
+}
+.apps {
+  flex: 1;
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  align-content: start;
+  align-items: start;
+}
+.app-card {
+  display: block;
+  border: 1px solid var(--ink);
+  background: rgba(255, 253, 246, 0.6);
+  padding: 1.6rem 1.7rem 1.5rem;
+  text-decoration: none;
+  color: var(--ink);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.app-card:hover { box-shadow: 5px 5px 0 var(--gold-soft); transform: translate(-1px, -1px); }
+.app-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.5rem;
+}
+.app-card h2 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.7rem;
+  line-height: 1.1;
+  margin-bottom: 0.6rem;
+}
+.app-card h2 em { font-style: italic; font-weight: 400; color: var(--oxblood); }
+.app-card p { font-size: 1.05rem; line-height: 1.55; color: var(--ink-soft); }
+.app-card .go {
+  display: inline-block;
+  margin-top: 1rem;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 0.9rem;
+  color: var(--oxblood);
+}
+.colophon {
+  padding: 0.7rem 1.6rem;
+  border-top: 1px solid var(--ink);
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.colophon a { color: var(--oxblood); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>Bible <em>apps</em></h1>
+  <p>small explorations in the data of Scripture — its cross-references, topics, kings, and prophets</p>
+  <hr class="rule">
+</header>
+
+<main class="apps">
+  <a class="app-card" href="verse-explorer/">
+    <div class="app-kicker">Cross-references · topics · words</div>
+    <h2>Every Word <em>Entwined</em></h2>
+    <p>Wander the 340,000 threads that bind Scripture to itself. Start from a topic
+    (“anxiety”, “forgiveness”), a word the old annotators hung their references on,
+    or any verse — and follow the connections across the whole canon.</p>
+    <span class="go">Open the explorer →</span>
+  </a>
+
+  <a class="app-card" href="kings-timeline/">
+    <div class="app-kicker">Timeline · 1050–560 BC</div>
+    <h2>The Line of <em>Kings</em></h2>
+    <p>Four centuries, two kingdoms, forty-two thrones. Israel and Judah's kings
+    color-coded by their verdict in Scripture, with the prophets who confronted them,
+    the books being written, and every reign linked to its chapters.</p>
+    <span class="go">Open the timeline →</span>
+  </a>
+</main>
+
+<footer class="colophon">
+  Made with <a href="https://www.openbible.info/">Open Bible</a> data and Claude Fable 5 (High) ·
+  cross-references &amp; topics CC-BY openbible.info · text KJV ·
+  <a href="https://github.com/lawwu/bible-apps">source on GitHub</a>
+</footer>
+
+</body>
+</html>
