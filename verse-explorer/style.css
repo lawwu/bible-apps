@@ -81,7 +81,7 @@ body {
 #search-input::placeholder { color: var(--ink-faint); font-style: italic; }
 #search-input:focus { box-shadow: 3px 3px 0 var(--gold-soft); }
 
-#index-btn, #topics-btn {
+#index-btn, #topics-btn, #people-btn {
   padding: 0.5rem 1rem;
   font-family: "Fraunces", Georgia, serif;
   font-size: 0.9rem;
@@ -93,7 +93,7 @@ body {
   transition: background 0.15s, color 0.15s;
 }
 
-#index-btn:hover, #topics-btn:hover { background: var(--oxblood); border-color: var(--oxblood); color: var(--paper); }
+#index-btn:hover, #topics-btn:hover, #people-btn:hover { background: var(--oxblood); border-color: var(--oxblood); color: var(--paper); }
 
 .threshold {
   display: flex;
@@ -554,6 +554,31 @@ body.no-graph .content { max-width: 900px; margin: 0 auto; }
 }
 
 .related-cloud .index-word { font-style: italic; }
+
+.sermon-list { margin-bottom: 1.4rem; }
+
+.sermon-item {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--ink);
+  text-decoration: none;
+  border-left: 2px solid var(--gold-soft);
+  padding: 0.4rem 0.9rem;
+  margin-bottom: 0.4rem;
+  max-width: 60ch;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.sermon-item:hover { background: rgba(169, 125, 28, 0.09); border-left-color: var(--gold); }
+
+.sermon-date {
+  display: block;
+  font-family: "Fraunces", serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: var(--oxblood);
+}
 
 /* ---------- colophon ---------- */
 

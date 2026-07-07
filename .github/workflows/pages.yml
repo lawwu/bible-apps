@@ -8,6 +8,7 @@ on:
       - "verse-explorer/**"
       - "kings-timeline/**"
       - "romans-road/**"
+      - "preached/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -35,6 +36,7 @@ jobs:
           cp -r verse-explorer dist/
           cp -r kings-timeline dist/
           cp -r romans-road dist/
+          cp -r preached dist/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
