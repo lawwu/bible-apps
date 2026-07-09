@@ -71,6 +71,8 @@ const svg = d3.select("#chart").attr("viewBox", `0 0 ${W} ${H}`);
 const x0 = d3.scaleLinear().domain(DOMAIN).range([6, W - 6]);
 let zx = x0;
 
+const isMobile = window.matchMedia("(max-width: 760px)").matches;
+
 const defs = svg.append("defs");
 defs.append("pattern").attr("id", "co-hatch")
   .attr("width", 5).attr("height", 5).attr("patternUnits", "userSpaceOnUse")
@@ -286,9 +288,84 @@ document.querySelectorAll(".views button").forEach((btn) => {
   });
 });
 
+/* ---------- mobile: fixed-width horizontal scroll ---------- */
+
+if (isMobile) setupMobile();
+
+function scrollDetailIntoView() {
+  if (!isMobile) return;
+  setTimeout(() => document.getElementById("detail")
+    .scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+}
+
+function tweenScrollLeft(el, to, ms = 480) {
+  const from = el.scrollLeft, d = to - from, t0 = Date.now();
+  const timer = setInterval(() => {
+    const p = Math.min((Date.now() - t0) / ms, 1);
+    el.scrollLeft = from + d * (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
+    if (p >= 1) clearInterval(timer);
+  }, 16);
+}
+
+function setupMobile() {
+  const RW = 1680;                 // rendered px width — legible (1.4× the viewBox)
+  const scale = RW / W;
+  svg.on(".zoom", null);           // drop d3 zoom; native scroll pans instead
+  svg.style("width", RW + "px").style("height", H * scale + "px").style("max-width", "none");
+  const wrap = document.querySelector(".chart-wrap");
+  wrap.classList.add("mobile-scroll");
+
+  const hint = document.createElement("p");
+  hint.className = "scroll-hint";
+  hint.textContent = "swipe the timeline sideways · tap a reign for its story";
+  wrap.after(hint);
+
+  // transparent minimum-width tap targets so 1-month reigns are still reachable
+  const MINW = 15;
+  const kings = [...unitedKings, ...israelKings, ...judahKings]
+    .filter((d) => x0(d.end) - x0(d.start) < MINW);
+  gMain.append("g").selectAll("rect").data(kings).join("rect")
+    .attr("x", (d) => (x0(d.start) + x0(d.end)) / 2 - MINW / 2)
+    .attr("y", (d) => d.kingdom === "united" ? bands.ik : kingY(d) + 1)
+    .attr("width", MINW)
+    .attr("height", (d) => d.kingdom === "united"
+      ? bands.jk + jkLanes * KING_LANE_H - bands.ik : KING_LANE_H - 4)
+    .attr("fill", "transparent").style("cursor", "pointer")
+    .on("click", (e, d) => { showDetail(d, "king"); scrollDetailIntoView(); });
+
+  const points = PROPHETS.filter((d) => d.start === d.end);
+  gMain.append("g").selectAll("rect").data(points).join("rect")
+    .attr("x", (d) => x0(d.start) - MINW / 2)
+    .attr("y", (d) => prophetY(d) - 2)
+    .attr("width", MINW).attr("height", PROPHET_LANE_H)
+    .attr("fill", "transparent").style("cursor", "pointer")
+    .on("click", (e, d) => { showDetail(d, "prophet"); scrollDetailIntoView(); });
+
+  // range buttons scroll to a region instead of zooming
+  document.querySelectorAll(".views button").forEach((orig) => {
+    const btn = orig.cloneNode(true);
+    orig.replaceWith(btn);
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".views button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const [a, b] = btn.dataset.range.split(",").map(Number);
+      const mid = ((x0(a) + x0(b)) / 2) * scale;
+      tweenScrollLeft(wrap, Math.max(0, mid - wrap.clientWidth / 2));
+    });
+  });
+
+  // bring the story card up after any tap on the chart
+  wrap.addEventListener("click", (e) => {
+    if (e.target.closest(".king-bar, .prophet-bar, .writing-mark, .event-hit")) {
+      scrollDetailIntoView();
+    }
+  });
+}
+
 /* ---------- tooltip ---------- */
 
 function showTip(event, kicker, title, body) {
+  if (isMobile) return;   // no hover on touch — tap opens the detail card instead
   tooltip.innerHTML = `<span class="tip-ref">${kicker}</span><b>${title}</b> — ${
     body.length > 150 ? body.slice(0, 147) + "…" : body}`;
   tooltip.hidden = false;

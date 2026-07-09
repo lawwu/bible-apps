@@ -279,6 +279,33 @@ body {
 .colophon a { color: var(--oxblood); }
 
 @media (max-width: 760px) {
+  .masthead { padding: 0.9rem 1rem 0.7rem; gap: 0.8rem 1rem; }
+  .wordmark { font-size: 1.4rem; }
+  .tagline { font-size: 0.85rem; }
+  .views { width: 100%; }
+  .views button { flex: 1; padding: 0.5rem 0.4rem; font-size: 0.8rem; text-align: center; }
+  .legend-bar { padding: 0.5rem 1rem; gap: 0.35rem 1rem; font-size: 0.78rem; }
   .legend-hint { display: none; }
-  .chart-wrap { padding: 0.6rem 0.6rem 0; }
+
+  .chart-wrap { padding: 0.4rem 0 0; }
+  .chart-wrap.mobile-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: none;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .chart-wrap.mobile-scroll #chart { cursor: default; }
+
+  .scroll-hint {
+    padding: 0.4rem 1rem 0;
+    font-size: 0.76rem;
+    font-style: italic;
+    color: var(--ink-faint);
+    text-align: center;
+  }
+
+  .detail { padding: 1.1rem 1rem 2.5rem; }
+  .detail-name { font-size: 1.7rem; }
+  .detail-note { font-size: 1.1rem; }
 }
