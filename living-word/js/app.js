@@ -15,11 +15,12 @@ const SECTION_COLORS = {
 };
 const TOPIC_COLOR = "#ffd76a";
 const PERSON_COLOR = "#f6f2ea";
+const TOPICAL_COLOR = "#ff9d45";
 
 const fmt = (n) => n.toLocaleString("en-US");
 
-const [graphData, details, overlay] = await Promise.all(
-  ["data/graph.json", "data/details.json", "data/overlay.json"].map((u) =>
+const [graphData, details, overlay, topical] = await Promise.all(
+  ["data/graph.json", "data/details.json", "data/overlay.json", "data/topics.json"].map((u) =>
     fetch(u, { cache: "no-cache" }).then((r) => r.json())
   )
 );
@@ -56,6 +57,24 @@ for (const kind of ["topics", "people"]) {
   }
 }
 
+// Topical Bible overlay (OpenBible.info votes, top verses carry KJV text)
+for (const item of topical.topics) {
+  const node = {
+    id: item.id,
+    label: item.label,
+    type: "obtopic",
+    refs: item.refs.filter((r) => chapterById.has(r)),
+    verses: item.verses,
+    strength: 0,
+  };
+  overlayNodes.push(node);
+  for (const ref of node.refs) {
+    overlayLinks.push({ source: item.id, target: ref, w: 0, overlay: true });
+    if (!overlayByChapter.has(ref)) overlayByChapter.set(ref, []);
+    overlayByChapter.get(ref).push(node);
+  }
+}
+
 const nodes = [...graphData.nodes, ...overlayNodes];
 const links = [...graphData.links, ...overlayLinks];
 const nodeById = new Map(nodes.map((n) => [n.id, n]));
@@ -65,6 +84,7 @@ const nodeById = new Map(nodes.map((n) => [n.id, n]));
 const activeSections = new Set(Object.keys(SECTION_COLORS));
 let showTopics = true;
 let showPeople = true;
+let showTopical = true;
 let selected = null;
 let highlightNodes = new Set();
 let highlightLinks = new Set();
@@ -72,11 +92,13 @@ let highlightLinks = new Set();
 const nodeColor = (n) =>
   n.type === "topic" ? TOPIC_COLOR :
   n.type === "person" ? PERSON_COLOR :
+  n.type === "obtopic" ? TOPICAL_COLOR :
   SECTION_COLORS[n.section];
 
 const nodeVisible = (n) =>
   n.type === "topic" ? showTopics :
   n.type === "person" ? showPeople :
+  n.type === "obtopic" ? showTopical :
   activeSections.has(n.section);
 
 // ---------- graph ----------
@@ -97,7 +119,7 @@ const Graph = new ForceGraph3D(document.getElementById("graph"), {
   .nodeVal((n) =>
     n.type === "chapter"
       ? 0.6 + 9 * Math.sqrt(n.strength / maxStrength)
-      : 5.5
+      : n.type === "obtopic" ? 3.5 : 5.5
   )
   .nodeOpacity(0.92)
   .nodeResolution(10)
@@ -203,6 +225,26 @@ const goTo = (id) => {
   if (n) focusNode(n);
 };
 
+// ---------- KJV text (per-book, fetched on demand) ----------
+
+const bookTextCache = new Map();
+
+async function getBookText(bookKey) {
+  if (!bookTextCache.has(bookKey)) {
+    bookTextCache.set(
+      bookKey,
+      fetch(`data/text/${bookKey}.json`).then((r) => r.json())
+    );
+  }
+  return bookTextCache.get(bookKey);
+}
+
+async function getChapterText(chapterId) {
+  const [bookKey, chap] = chapterId.split(":");
+  const book = await getBookText(bookKey);
+  return book[chap] || [];
+}
+
 // ---------- detail panel ----------
 
 const panel = document.getElementById("panel");
@@ -216,9 +258,30 @@ function esc(s) {
 function renderPanel(node) {
   panel.classList.remove("hidden");
   panelBody.innerHTML =
-    node.type === "chapter" ? chapterHTML(node) : overlayHTML(node);
+    node.type === "chapter" ? chapterHTML(node) :
+    node.type === "obtopic" ? topicalHTML(node) :
+    overlayHTML(node);
   panelBody.querySelectorAll("[data-go]").forEach((el) => {
     el.onclick = () => goTo(el.dataset.go);
+  });
+  panelBody.querySelectorAll("[data-read]").forEach((el) => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const [cid, verse] = el.dataset.read.split("@");
+      openReader(cid, verse ? +verse : null);
+    };
+  });
+  if (node.type === "chapter") hydrateVerseText(node);
+  if (!reader.classList.contains("hidden") && node.type === "chapter")
+    openReader(node.id);
+}
+
+async function hydrateVerseText(node) {
+  const texts = await getChapterText(node.id);
+  if (selected !== node) return; // panel moved on while fetching
+  panelBody.querySelectorAll("[data-vtext]").forEach((el) => {
+    const t = texts[+el.dataset.vtext - 1];
+    if (t) el.textContent = t;
   });
 }
 
@@ -230,10 +293,11 @@ function chapterHTML(node) {
 
   const verses = d.verses
     .map(
-      ([v, n]) => `<li>
+      ([v, n]) => `<li class="link verse-row" data-read="${node.id}@${v}" title="Read in context">
         <span>${esc(node.label)}:${v}</span>
         <span class="bar"><i style="width:${Math.round((n / maxV) * 100)}%"></i></span>
         <span class="count">${fmt(n)} refs</span>
+        <span class="vtext" data-vtext="${v}"></span>
       </li>`
     )
     .join("");
@@ -251,16 +315,43 @@ function chapterHTML(node) {
     .join("");
 
   const tags = (overlayByChapter.get(node.id) || [])
-    .map((o) => `<span data-go="${o.id}">${o.type === "topic" ? "◆" : "✦"} ${esc(o.label)}</span>`)
+    .map((o) => {
+      const mark = o.type === "topic" ? "◆" : o.type === "person" ? "✦" : "❖";
+      const cap = o.type === "obtopic" ? ' style="text-transform:capitalize"' : "";
+      return `<span data-go="${o.id}"${cap}>${mark} ${esc(o.label)}</span>`;
+    })
     .join("");
 
   return `
     <div class="eyebrow"><span class="dot" style="color:${color};background:${color}"></span>${esc(node.section)}</div>
     <h2>${esc(node.label)}</h2>
     <p class="sub">${fmt(node.strength)} cross-reference connections</p>
+    <button class="read-btn" data-read="${node.id}">Read this chapter</button>
     ${d.verses.length ? `<h3>Most referenced verses</h3><ul class="rowlist">${verses}</ul>` : ""}
     ${d.conn.length ? `<h3>Strongest connections</h3><ul class="rowlist">${conns}</ul>` : ""}
     ${tags ? `<h3>Appears in</h3><div class="taglist">${tags}</div>` : ""}
+  `;
+}
+
+function topicalHTML(node) {
+  const color = nodeColor(node);
+  const maxVotes = node.verses.length ? node.verses[0][3] : 1;
+  const rows = node.verses
+    .map(
+      ([label, cid, text, votes]) => `<li class="link verse-row" data-go="${cid}" title="Go to chapter">
+        <span style="color:${TOPICAL_COLOR}">${esc(label)}</span>
+        <span class="bar"><i style="width:${Math.round((votes / maxVotes) * 100)}%"></i></span>
+        <span class="count">${fmt(votes)} votes</span>
+        <span class="vtext">${esc(text)}</span>
+      </li>`
+    )
+    .join("");
+  return `
+    <div class="eyebrow"><span class="dot" style="color:${color};background:${color}"></span>Topical Bible</div>
+    <h2 style="text-transform:capitalize">${esc(node.label)}</h2>
+    <p class="sub">as voted by readers at openbible.info</p>
+    <h3>Top verses</h3>
+    <ul class="rowlist">${rows}</ul>
   `;
 }
 
@@ -281,6 +372,63 @@ function overlayHTML(node) {
     <div class="taglist">${passages}</div>
   `;
 }
+
+// ---------- Bible reader ----------
+
+const reader = document.getElementById("reader");
+const readerBody = document.getElementById("reader-body");
+const readerTitle = document.getElementById("reader-title");
+const readerEyebrow = document.getElementById("reader-eyebrow");
+const readerPrev = document.getElementById("reader-prev");
+const readerNext = document.getElementById("reader-next");
+let readerChapter = null;
+
+// canonical chapter order for prev/next navigation
+const chapterOrder = graphData.nodes.map((n) => n.id);
+const chapterIndex = new Map(chapterOrder.map((id, i) => [id, i]));
+
+async function openReader(chapterId, pinVerse = null) {
+  const node = chapterById.get(chapterId);
+  if (!node) return;
+  readerChapter = chapterId;
+  reader.classList.remove("hidden");
+  readerEyebrow.textContent = `${node.section} · King James Version`;
+  readerTitle.textContent = node.label;
+  readerBody.innerHTML = `<p style="font-style:italic;color:var(--ink-dim)">…</p>`;
+
+  const texts = await getChapterText(chapterId);
+  if (readerChapter !== chapterId) return; // navigated away while fetching
+
+  const refCounts = new Map((details[chapterId]?.verses || []).map(([v, n]) => [v, n]));
+  readerBody.innerHTML = texts
+    .map((t, i) => {
+      const v = i + 1;
+      const hot = refCounts.has(v);
+      const pinned = pinVerse === v;
+      return `<p${pinned ? ' class="pinned" id="pinned-verse"' : hot ? ' class="hot"' : ""}>
+        ${hot ? `<span class="refcount">${fmt(refCounts.get(v))} refs</span>` : ""}
+        <span class="vnum">${v}</span>${esc(t)}</p>`;
+    })
+    .join("");
+  readerBody.scrollTop = 0;
+  if (pinVerse) {
+    document.getElementById("pinned-verse")?.scrollIntoView({ block: "center" });
+  }
+
+  const idx = chapterIndex.get(chapterId);
+  const prev = chapterOrder[idx - 1], next = chapterOrder[idx + 1];
+  readerPrev.disabled = !prev;
+  readerNext.disabled = !next;
+  if (prev) readerPrev.querySelector("span").textContent = chapterById.get(prev).label;
+  if (next) readerNext.querySelector("span").textContent = chapterById.get(next).label;
+  readerPrev.onclick = () => prev && openReader(prev);
+  readerNext.onclick = () => next && openReader(next);
+}
+
+document.getElementById("reader-close").onclick = () => {
+  reader.classList.add("hidden");
+  readerChapter = null;
+};
 
 // ---------- filters ----------
 
@@ -306,6 +454,7 @@ for (const [section, color] of Object.entries(SECTION_COLORS)) {
 }
 addChip("Theology", TOPIC_COLOR, () => showTopics, () => (showTopics = !showTopics), true);
 addChip("People", PERSON_COLOR, () => showPeople, () => (showPeople = !showPeople), true);
+addChip("Topics", TOPICAL_COLOR, () => showTopical, () => (showTopical = !showTopical), true);
 
 // ---------- search ----------
 
@@ -316,7 +465,10 @@ const searchIndex = nodes.map((n) => ({
   id: n.id,
   label: n.label,
   lower: n.label.toLowerCase(),
-  kind: n.type === "chapter" ? n.book : n.type === "topic" ? "theology" : "person",
+  kind:
+    n.type === "chapter" ? n.book :
+    n.type === "topic" ? "theology" :
+    n.type === "obtopic" ? "topic" : "person",
 }));
 
 searchEl.addEventListener("input", () => {
@@ -348,7 +500,7 @@ document.addEventListener("click", (e) => {
 document.getElementById("stats").innerHTML =
   `${fmt(graphData.nodes.length)} chapters · ${fmt(graphData.meta.links)} connections<br>` +
   `distilled from ${fmt(graphData.meta.totalRefs)} cross-references<br>` +
-  `${fmt(overlay.topics.length)} doctrines · ${fmt(overlay.people.length)} people`;
+  `${fmt(overlay.topics.length)} doctrines · ${fmt(overlay.people.length)} people · ${fmt(topical.topics.length)} topics`;
 
 // fade the hint after a while
 setTimeout(() => (document.getElementById("hint").style.opacity = 0), 14000);
