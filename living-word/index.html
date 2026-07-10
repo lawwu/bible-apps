@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Living Word — a knowledge graph of Scripture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.180.0",
+    "three/webgpu": "https://esm.sh/three@0.180.0/webgpu",
+    "three/tsl": "https://esm.sh/three@0.180.0/tsl",
+    "three/addons/": "https://esm.sh/three@0.180.0/examples/jsm/",
+    "three/examples/jsm/": "https://esm.sh/three@0.180.0/examples/jsm/",
+    "3d-force-graph": "https://esm.sh/3d-force-graph@1.79.0?external=three"
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="graph"></div>
+
+<header class="masthead">
+  <div class="masthead-rule"></div>
+  <h1>The Living Word</h1>
+  <p class="tagline">A knowledge graph of Scripture</p>
+  <p class="stats" id="stats"></p>
+</header>
+
+<div class="search-wrap">
+  <input id="search" type="text" placeholder="Search chapters, topics, people…" autocomplete="off" spellcheck="false">
+  <div id="search-results" class="search-results hidden"></div>
+</div>
+
+<nav class="filters" id="filters" aria-label="Filters"></nav>
+
+<aside class="panel hidden" id="panel">
+  <button class="panel-close" id="panel-close" aria-label="Close">×</button>
+  <div class="panel-body" id="panel-body"></div>
+</aside>
+
+<div class="hint" id="hint">drag to orbit · scroll to zoom · click a light to read</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
