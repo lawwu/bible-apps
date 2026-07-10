@@ -46,5 +46,6 @@ the apps.
 - [`cross_references.txt`](cross_references.txt) — OpenBible.info
   cross-reference votes ([CC-BY](https://www.openbible.info/labs/cross-references/))
 - [`tsk/`](tsk/) — Treasury of Scripture Knowledge phrase anchors (public domain)
+- [`bsb.txt`](bsb.txt) — Berean Standard Bible text ([public domain](https://berean.bible/licensing.htm), berean.bible)
 - [`openbible-topical-verses/`](openbible-topical-verses/) — OpenBible.info
   Topical Bible votes ([CC-BY](https://www.openbible.info/topics/))
