@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Build the Topical Bible overlay from OpenBible topic votes.
 
-Reads ../verse-explorer/data/topics.json (topic -> [[verseIdx, span, votes]])
-and the shared KJV verses.json, keeps the top topics by peak votes, and writes
-data/topics.json with each topic's top verses (with text) and the chapters
-they live in.
+Reads ../verse-explorer/data/topics.json (topic -> [[verseIdx, span, votes]],
+verse indices into the shared verses.json id list), keeps the top topics by
+peak votes, and writes data/topics.json with each topic's top verses (Berean
+Standard Bible text) and the chapters they live in.
 
-Data: CC-BY openbible.info Topical Bible.
+Data: CC-BY openbible.info Topical Bible; text BSB (public domain).
 """
 
 import json
 import re
 from pathlib import Path
+
+from build_text import parse_bsb
 
 ROOT = Path(__file__).resolve().parent.parent
 VE_DATA = ROOT.parent / "verse-explorer" / "data"
@@ -49,8 +51,9 @@ BOOK_NAME = [
 
 def main():
     verses = json.loads((VE_DATA / "verses.json").read_text())
-    ids, texts = verses["ids"], verses["texts"]
+    ids, kjv_texts = verses["ids"], verses["texts"]
     topics = json.loads((VE_DATA / "topics.json").read_text())
+    bsb = {(b, c, v): t for b, c, v, t in parse_bsb()}
 
     ranked = sorted(
         ((name, refs) for name, refs in topics.items() if refs),
@@ -74,7 +77,8 @@ def main():
                 if end_code == code and end_chap == chap:
                     label += f"–{end_verse}"
             chapter_id = f"{book}:{chap}"
-            entries.append([label, chapter_id, texts[idx], votes])
+            text = bsb.get((book, int(chap), int(verse))) or kjv_texts[idx]
+            entries.append([label, chapter_id, text, votes])
             if chapter_id not in chapters:
                 chapters.append(chapter_id)
         if len(entries) < 3:

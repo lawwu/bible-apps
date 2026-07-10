@@ -281,7 +281,7 @@ async function hydrateVerseText(node) {
   if (selected !== node) return; // panel moved on while fetching
   panelBody.querySelectorAll("[data-vtext]").forEach((el) => {
     const t = texts[+el.dataset.vtext - 1];
-    if (t) el.textContent = t;
+    el.textContent = t || "Not in the BSB main text — carried as a footnote.";
   });
 }
 
@@ -392,7 +392,7 @@ async function openReader(chapterId, pinVerse = null) {
   if (!node) return;
   readerChapter = chapterId;
   reader.classList.remove("hidden");
-  readerEyebrow.textContent = `${node.section} · King James Version`;
+  readerEyebrow.textContent = `${node.section} · Berean Standard Bible`;
   readerTitle.textContent = node.label;
   readerBody.innerHTML = `<p style="font-style:italic;color:var(--ink-dim)">…</p>`;
 
@@ -405,9 +405,15 @@ async function openReader(chapterId, pinVerse = null) {
       const v = i + 1;
       const hot = refCounts.has(v);
       const pinned = pinVerse === v;
+      // BSB carries some traditionally-disputed verses only in footnotes;
+      // skip the empty slot unless the verse is pinned or cross-referenced
+      if (!t && !hot && !pinned) return "";
+      const body = t
+        ? esc(t)
+        : `<em style="color:var(--ink-dim)">Not in the BSB main text — carried as a footnote in the oldest manuscripts.</em>`;
       return `<p${pinned ? ' class="pinned" id="pinned-verse"' : hot ? ' class="hot"' : ""}>
         ${hot ? `<span class="refcount">${fmt(refCounts.get(v))} refs</span>` : ""}
-        <span class="vnum">${v}</span>${esc(t)}</p>`;
+        <span class="vnum">${v}</span>${body}</p>`;
     })
     .join("");
   readerBody.scrollTop = 0;
