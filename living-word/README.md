@@ -32,9 +32,16 @@ three.js and 3d-force-graph load from esm.sh, fonts from Google Fonts.)
 - **Read this chapter** (or click any verse row) opens the reader: the full
   BSB chapter with its most cross-referenced verses highlighted and marked
   with their reference counts, plus previous/next navigation through the canon
+- **Unfold verses** on any chapter to expand it in place: all its verses
+  appear on a Fibonacci-sphere shell around the chapter (verse 1 at the top
+  pole, reading order downward), sized by how often each verse is referenced.
+  Verse-level cross-references draw to other unfolded chapters verse-to-verse,
+  and aggregate to the chapter node otherwise. Click a verse for its text and
+  full reference list; unfold several chapters to compare them. The layout
+  freezes on first unfold so nothing drifts.
 - **Search** chapters, doctrines, people, and topics (top right)
-- **Filter chips** (bottom left) toggle canon sections, Theology, People,
-  and Topics
+- **Filter chips** (bottom left): click to isolate a category, click the lone
+  active chip to restore all, shift-click to toggle one in or out
 
 ## Data
 
@@ -47,6 +54,7 @@ three.js and 3d-force-graph load from esm.sh, fonts from Google Fonts.)
 | `data/topics.json` | Top 150 OpenBible Topical Bible topics (CC-BY openbible.info) with top-voted verses and BSB text |
 | `../bsb.txt` | Berean Standard Bible, official tab-delimited download from bereanbible.com (public domain) |
 | `data/text/{1..66}.json` | BSB text per book, fetched on demand by the reader |
+| `data/verses/{book}-{chapter}.json` | Verse-level cross-references per chapter (~5 KB each), fetched only when a chapter is unfolded |
 
 ### Pipeline
 
@@ -54,6 +62,7 @@ three.js and 3d-force-graph load from esm.sh, fonts from Google Fonts.)
 python3 scripts/build_graph.py    # TSK -> graph.json + details.json
 python3 scripts/build_text.py    # bsb.txt -> data/text/{book}.json
 python3 scripts/build_topics.py  # OpenBible topic votes -> data/topics.json
+python3 scripts/build_verses.py  # TSK -> data/verses/{book}-{chapter}.json
 ```
 
 Parses the TSK file, expands verse lists/ranges, aggregates references to
