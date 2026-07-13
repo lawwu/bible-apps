@@ -1,0 +1,72 @@
+# Nightly church-profile refresh — stage 6 of church-map/SCRAPER-DESIGN.md.
+#
+# Walks the fleet oldest-checked-first with a fixed budget, so every church
+# is revisited roughly quarterly (~7,200 sites / 300 per night ≈ 24 nights
+# per full pass, at 1 request/second inside the run). Re-runs kinship and
+# the app publish step, then commits the diff — the repo is the database.
+#
+# The fetch cache (church-map/scraper/cache/) is restored via actions/cache
+# so unchanged pages cost one conditional request and no re-extraction.
+#
+# NOTE: leave the schedule commented out until the initial state-by-state
+# rollout finishes (see SCRAPER-DESIGN.md "State rollout") — a nightly
+# committer racing manual batch runs would only make merge noise. Trigger
+# manually with workflow_dispatch until then.
+
+name: church-profiles
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "max churches to refresh"
+        default: "300"
+  # schedule:
+  #   - cron: "17 9 * * *"   # nightly, 09:17 UTC — enable after rollout
+
+permissions:
+  contents: write
+
+concurrency:
+  group: church-profiles
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore fetch cache
+        uses: actions/cache@v4
+        with:
+          path: church-map/scraper/cache
+          key: church-scraper-cache-${{ github.run_id }}
+          restore-keys: church-scraper-cache-
+
+      - name: Refresh oldest-checked churches
+        run: |
+          python3 church-map/scraper/scrape.py --refresh \
+            --budget "${{ github.event.inputs.budget || 300 }}"
+
+      - name: Kinship + publish
+        run: |
+          python3 church-map/scraper/kinship.py
+          python3 church-map/scraper/publish.py
+
+      - name: Commit the diff
+        run: |
+          git config user.name "church-profiles bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add church-map/data/profiles.jsonl church-map/data/profiles.json
+          if git diff --cached --quiet; then
+            echo "no profile changes"
+          else
+            git commit -m "church-profiles: nightly refresh"
+            git push
+          fi

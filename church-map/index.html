@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Church Nearby — two directories, one map</title>
+<meta name="description" content="Every church in the 9Marks directory and The Master's Seminary church finder on one map — 7,500 congregations across 67 countries, and the American metros farthest from any of them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=EB+Garamond:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css?v=6">
+<script defer src="../shared/nav.js"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <h1 class="wordmark">A Church <em>Nearby</em></h1>
+  <p class="tagline">two directories, one map — and the places far from either</p>
+</header>
+
+<main id="main" class="main">
+  <p class="loading-note">Placing 7,500 churches…</p>
+</main>
+
+<footer class="colophon">
+  Listings from the <a href="https://www.9marks.org/church-search/">9Marks church search</a>
+  and <a href="https://tms.edu/find-a-church/">The Master's Seminary church finder</a>,
+  fetched by <code>church-map/scripts/build_churches.py</code> · listing here (or there)
+  is information, not endorsement — visit before you judge ·
+  map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ·
+  part of <a href="../">Bible apps</a>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js?v=8"></script>
+</body>
+</html>
