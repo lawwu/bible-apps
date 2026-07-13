@@ -29,6 +29,11 @@ Made with [Open Bible](https://www.openbible.info/) data and Claude Fable 5 (Hig
   their verdict in Scripture, the prophets who confronted them, the books
   being written, and every reign linked into the cross-reference explorer.
   Dates follow the ESV Global Study Bible charts.
+- **[The Translation Tree](translation-tree/)** (`translation-tree/`) — a
+  family tree of the English Bible, 1382–2025: Wycliffe and Tyndale down
+  through the KJV to the ESV, NASB, LSB, NIV and the rest, color-coded by
+  textual stream (Vulgate, Textus Receptus, or critical Greek text). Click
+  any Bible to light up its whole lineage, ancestors and heirs alike.
 
 ## Run locally
 
