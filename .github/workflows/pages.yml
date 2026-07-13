@@ -5,9 +5,12 @@ on:
     branches: ["main"]
     paths:
       - "index.html"
+      - "shared/**"
       - "verse-explorer/**"
       - "kings-timeline/**"
       - "translation-tree/**"
+      - "translations/**"
+      - "church-map/**"
       - "romans-road/**"
       - "preached/**"
       - "living-word/**"
@@ -35,12 +38,17 @@ jobs:
         run: |
           mkdir dist
           cp index.html dist/
+          cp -r shared dist/
           cp -r verse-explorer dist/
           cp -r kings-timeline dist/
           cp -r translation-tree dist/
+          cp -r translations dist/
+          cp -r church-map dist/
           cp -r romans-road dist/
           cp -r preached dist/
           cp -r living-word dist/
+          # build tooling isn't part of the site
+          rm -rf dist/*/scripts dist/church-map/scraper dist/church-map/sources dist/translations/sources
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
