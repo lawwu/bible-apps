@@ -29,8 +29,19 @@ const BOOKS = [
 const BOOK_NAME = new Map(BOOKS.map(([o, n]) => [o, n]));
 
 let DATA = null;
+let ANALYTICS = null;
 let byChapter = new Map();   // "Gal.3" -> [{s: sermonIdx, ts, fromTitle}]
 let byId = new Map();
+
+/* classification palette — CVD-validated against the paper surface in this
+   legend/stack order (olive, blue, gold); gold's low contrast is relieved by
+   direct labels, 2px gaps, and the table view */
+const CLS = [
+  ["expository", "#6d8226", "walks through one passage"],
+  ["mixed", "#4468b0", "one passage, ranging widely"],
+  ["topical", "#bf8a14", "ranges across the canon"],
+];
+const CLS_COLOR = new Map(CLS.map(([k, c]) => [k, c]));
 
 const main = document.getElementById("main");
 const crumbs = document.getElementById("crumbs");
@@ -63,7 +74,10 @@ function passageLabel(s) {
 }
 
 async function load() {
-  DATA = await fetch("data/sermons.json").then((r) => r.json());
+  [DATA, ANALYTICS] = await Promise.all([
+    fetch("data/sermons.json").then((r) => r.json()),
+    fetch("data/analytics.json").then((r) => r.json()).catch(() => null),
+  ]);
   DATA.sermons.forEach((s, i) => {
     byId.set(s.id, i);
     const titleCh = s.passage ? s.passage[0].split(".").slice(0, 2).join(".") : null;
@@ -93,7 +107,8 @@ function drawHome() {
     <h2 class="page-title">Where has this church walked?</h2>
     <p class="page-note">Each square is a chapter; the deeper the gold, the more sermons
     read or teach from it. Click any tinted square for its sermons. The pale regions are
-    honest too — every pulpit has them.</p>`;
+    honest too — every pulpit has them.${ANALYTICS ?
+      ` Or step back and see <a href="#analytics">the pulpit, measured →</a>` : ""}</p>`;
 
   const testaments = [["Old Testament", 0, 39], ["New Testament", 39, 66]];
   for (const [label, from, to] of testaments) {
@@ -171,6 +186,32 @@ function drawSermon(id) {
       </div>
     </div>`;
 
+  const a = ANALYTICS && ANALYTICS.sermons[s.id];
+  if (a && (a.cls !== "unclassified" || (a.words >= 500 && a.read))) {
+    html += `<div class="badge-row">`;
+    if (a.cls !== "unclassified") {
+      html += `<span class="cls-chip" title="${a.series ?
+          "part of a series walking through one book" :
+          `${Math.round((a.conc || 0) * 100)}% of its citations stay in the main chapter`}">
+        <i style="background:${CLS_COLOR.get(a.cls)}"></i>${a.cls}</span>`;
+    }
+    if (a.words >= 500 && a.read) {
+      html += `<span class="cls-chip" title="share of the transcript matching the Bible text nearly verbatim">
+        ≈${Math.round(a.read * 100)}% Scripture read aloud</span>`;
+    }
+    html += `</div>`;
+  }
+  if (a && a.quotes) {
+    html += `<p class="cites-heading">Voices quoted · click a time to jump there</p>`;
+    for (const [name, count, ts] of a.quotes) {
+      html += `
+        <div class="cite-row">
+          <a class="cite-time" href="${esc(tsLink(s.url, ts))}" target="_blank" rel="noopener">${fmtTime(ts)}</a>
+          <span class="cite-ref">${esc(name)}${count > 1 ? ` <span class="quote-n">× ${count}</span>` : ""}</span>
+        </div>`;
+    }
+  }
+
   if (s.cites.length) {
     html += `<p class="cites-heading">Verses read or cited · click a time to jump there</p>`;
     for (const [osis, ts] of s.cites) {
@@ -202,11 +243,131 @@ function drawSermon(id) {
   window.scrollTo({ top: 0 });
 }
 
+/* ---------- analytics ---------- */
+
+function pct(x) { return Math.round(x * 100) + "%"; }
+
+function stackBar(parts, title) {
+  // parts: [[label, count, color]], rendered as a 100%-stacked thin bar
+  const total = parts.reduce((t, p) => t + p[1], 0);
+  if (!total) return "";
+  let segs = "";
+  for (const [label, count, color] of parts) {
+    if (!count) continue;
+    segs += `<i class="seg" style="flex-grow:${count};background:${color}"
+      title="${esc(title)} · ${label}: ${count} of ${total} (${pct(count / total)})"></i>`;
+  }
+  return `<div class="stack">${segs}</div>`;
+}
+
+function drawAnalytics() {
+  const A = ANALYTICS;
+  crumbs.innerHTML = `<a href="#">← the archive</a>`;
+  const o = A.overall;
+  const expShare = pct(o.expository / o.classified);
+  const topVoice = A.people[0];
+
+  let html = `
+    <p class="page-kicker">The pulpit, measured</p>
+    <h2 class="page-title">How does this church preach?</h2>
+    <p class="page-note">Fifteen years of transcripts, read three ways: does a sermon walk
+    through one passage or range across the canon, how much of it is Scripture read aloud,
+    and whose voices get quoted from the pulpit. Estimates from transcript analysis — the
+    method is described at the bottom.</p>
+
+    <div class="stats-row">
+      <div class="stat"><b>${o.n.toLocaleString()}</b>sermons</div>
+      <div class="stat"><b>${o.hours.toLocaleString()}</b>hours of preaching</div>
+      <div class="stat"><b>${expShare}</b>expository, of ${o.classified.toLocaleString()} classified</div>
+      <div class="stat"><b>${pct(o.read_avg)}</b>of a sermon is Scripture read aloud</div>
+      <div class="stat"><b>${esc(topVoice[0])}</b>most-quoted voice · ${topVoice[2]} sermons</div>
+    </div>`;
+
+  // ---- classification split
+  html += `
+    <p class="sec-heading">Expository, mixed, or topical</p>
+    <p class="chart-note">A sermon counts as <b>expository</b> when it belongs to a series
+    walking through one book, or when its citations stay concentrated in its main chapter;
+    <b>topical</b> when they scatter. ${(o.n - o.classified).toLocaleString()} recordings —
+    testimonies, VBS weeks, performances, silent transcripts — cite too little Scripture
+    to classify.</p>
+    ${stackBar(CLS.map(([k, c]) => [k, o[k], c]), "All classified sermons")}
+    <p class="leg-row">${CLS.map(([k, c, hint]) =>
+      `<span class="leg" title="${hint}"><i style="background:${c}"></i>${k} · ${o[k]}</span>`).join("")}</p>`;
+
+  // ---- by year
+  const years = Object.entries(A.years).filter(([y, v]) =>
+    +y >= 2015 && (v.expository + v.mixed + v.topical) >= 10);
+  html += `<p class="sec-heading">Year by year</p>`;
+  for (const [y, v] of years) {
+    const cn = v.expository + v.mixed + v.topical;
+    html += `
+      <div class="yr-row">
+        <span class="yr">${y}</span>
+        ${stackBar(CLS.map(([k, c]) => [k, v[k], c]), y)}
+        <span class="yr-n">${cn}</span>
+      </div>`;
+  }
+  html += `
+    <details class="data-table"><summary>the numbers</summary>
+      <table><tr><th>year</th><th>expository</th><th>mixed</th><th>topical</th>
+      <th>unclassified</th><th>Scripture read</th></tr>
+      ${years.map(([y, v]) => `<tr><td>${y}</td><td>${v.expository}</td><td>${v.mixed}</td>
+        <td>${v.topical}</td><td>${v.unclassified}</td><td>${pct(v.read)}</td></tr>`).join("")}
+      </table></details>`;
+
+  // ---- reading share by year
+  html += `
+    <p class="sec-heading">Scripture read aloud</p>
+    <p class="chart-note">The share of the average sermon that matches the Bible text
+    nearly verbatim — the passage read at the start, and every quotation along the way.</p>`;
+  const readMax = 0.3;
+  for (const [y, v] of years) {
+    html += `
+      <div class="yr-row">
+        <span class="yr">${y}</span>
+        <div class="hbar-track"><i class="hbar" style="width:${Math.min(100, v.read / readMax * 100)}%"></i></div>
+        <span class="yr-n">${pct(v.read)}</span>
+      </div>`;
+  }
+
+  // ---- voices
+  const voices = A.people.slice(0, 18);
+  const vMax = voices[0][1];
+  html += `
+    <p class="sec-heading">The voices in the room</p>
+    <p class="chart-note">Preachers quote their library. Mentions of well-known theologians,
+    authors, and figures of church history across all ${o.n.toLocaleString()} transcripts —
+    click any sermon's "voices quoted" times to hear the mention itself.</p>`;
+  for (const [name, mentions, inSermons] of voices) {
+    html += `
+      <div class="voice-row" title="${esc(name)}: ${mentions} mentions across ${inSermons} sermons">
+        <span class="voice-name">${esc(name)}</span>
+        <div class="hbar-track"><i class="hbar" style="width:${mentions / vMax * 100}%"></i></div>
+        <span class="yr-n">${mentions} · ${inSermons} sermon${inSermons > 1 ? "s" : ""}</span>
+      </div>`;
+  }
+
+  html += `
+    <p class="method-note">Method: classification watches where a sermon's Scripture
+    references cluster — fully-qualified references plus bare "verse five" mentions
+    attributed to the chapter the preacher is in — and marks series walking through a book
+    (≥ ${pct(A.thresholds.expository)} concentration = expository, &lt; ${pct(A.thresholds.topical)} = topical).
+    Reading share matches transcript 3-word shingles against the Berean Standard Bible, so
+    readings from other translations register slightly low. Voices come from a curated list
+    of ~90 names; whisper mishears some. All of it is honest arithmetic, none of it is a
+    verdict — <a href="#">the archive</a> is the point.</p>`;
+
+  main.innerHTML = html;
+  window.scrollTo({ top: 0 });
+}
+
 /* ---------- routing ---------- */
 
 function route() {
   const h = decodeURIComponent(location.hash.slice(1));
   if (!h) return drawHome();
+  if (h === "analytics" && ANALYTICS) return drawAnalytics();
   if (h.startsWith("s:") && byId.has(h.slice(2))) return drawSermon(h.slice(2));
   if (byChapter.has(h)) return drawChapter(h);
   drawHome();
