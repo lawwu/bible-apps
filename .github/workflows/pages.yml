@@ -7,6 +7,7 @@ on:
       - "index.html"
       - "verse-explorer/**"
       - "kings-timeline/**"
+      - "translation-tree/**"
       - "romans-road/**"
       - "preached/**"
       - "living-word/**"
@@ -36,6 +37,7 @@ jobs:
           cp index.html dist/
           cp -r verse-explorer dist/
           cp -r kings-timeline dist/
+          cp -r translation-tree dist/
           cp -r romans-road dist/
           cp -r preached dist/
           cp -r living-word dist/
