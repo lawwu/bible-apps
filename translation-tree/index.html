@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Translation Tree — a family tree of the English Bible</title>
+<meta name="description" content="How the English Bible descends: from Wycliffe and Tyndale through the KJV to the ESV, NASB, LSB and beyond — every major translation and the stream it drinks from.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=EB+Garamond:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-left">
+    <h1 class="wordmark"><a href="../">Bible apps</a> · The Translation <em>Tree</em></h1>
+    <p class="tagline">from Wycliffe’s pen to the LSB — where every English Bible came from</p>
+  </div>
+  <nav class="views" aria-label="Trace a lineage">
+    <button data-trace="kjv1611">Trace the KJV</button>
+    <button data-trace="esv">Trace the ESV</button>
+    <button data-trace="lsb">Trace the LSB</button>
+    <button data-trace="">Show all</button>
+  </nav>
+</header>
+
+<section class="legend-bar">
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#7d8c2e"></span>from the Latin Vulgate</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#9c2a1e"></span>the Textus Receptus line</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#3a62ac"></span>the critical (eclectic) Greek text</span>
+  <span class="legend-item"><svg class="edge-swatch" viewBox="0 0 34 10" aria-hidden="true"><line x1="1" y1="5" x2="33" y2="5"/></svg>direct revision</span>
+  <span class="legend-item"><svg class="edge-swatch dashed" viewBox="0 0 34 10" aria-hidden="true"><line x1="1" y1="5" x2="33" y2="5"/></svg>translated from · influenced</span>
+  <span class="legend-hint">click any Bible to light its whole lineage · click the paper to release</span>
+</section>
+
+<main class="chart-wrap">
+  <svg id="chart" role="img"></svg>
+  <div id="tooltip" class="tooltip" hidden></div>
+</main>
+<p class="scroll-hint">swipe the chart sideways · tap a Bible for its story</p>
+
+<section id="detail" class="detail" aria-live="polite">
+  <p class="detail-hint">Click any Bible above to trace its whole lineage and read its story here.</p>
+</section>
+
+<details class="table-view">
+  <summary>Every translation, as a table</summary>
+  <div class="table-scroll">
+    <table id="trans-table">
+      <thead>
+        <tr><th>Year</th><th>Translation</th><th>Textual stream</th><th>Approach</th><th>Descends from</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</details>
+
+<footer class="colophon">
+  Streams follow each version’s New Testament base text · dates are first complete editions ·
+  chart after the classic lineage diagrams in introductions to the English Bible ·
+  made with Claude Fable 5 (High) · part of <a href="../">Bible apps</a>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
