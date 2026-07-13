@@ -1,0 +1,322 @@
+:root {
+  --paper: #f7f1e3;
+  --ink: #241d12;
+  --ink-soft: #5c5240;
+  --ink-faint: #8d8064;
+  --oxblood: #8b2a1d;
+  --gold: #a97d1c;
+  --gold-soft: #e9d9ae;
+  --hairline: rgba(36, 29, 18, 0.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 252, 242, 0.9), transparent 60%),
+    radial-gradient(ellipse 100% 100% at 100% 120%, rgba(169, 125, 28, 0.08), transparent 55%);
+  color: var(--ink);
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 17px;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  padding: 1.1rem 1.6rem 0.9rem;
+  border-bottom: 1px solid var(--ink);
+}
+
+.wordmark {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.7rem;
+  line-height: 1.05;
+}
+
+.wordmark em { font-style: italic; font-weight: 400; color: var(--oxblood); }
+
+.tagline {
+  margin-top: 0.15rem;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+/* ---------- main ---------- */
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 2rem 1.6rem 3rem;
+}
+
+.loading-note { font-style: italic; color: var(--ink-faint); }
+
+.page-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.4rem;
+}
+
+.page-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 2.1rem;
+  line-height: 1.05;
+  margin-bottom: 0.7rem;
+}
+
+.page-note {
+  font-size: 1.02rem;
+  color: var(--ink-soft);
+  max-width: 64ch;
+  margin-bottom: 0.6rem;
+}
+
+.page-note a { color: var(--oxblood); }
+
+.sec-heading {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin: 2.4rem 0 0.3rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.chart-note {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  max-width: 62ch;
+  margin-bottom: 1rem;
+}
+
+/* ---------- translation cards ---------- */
+
+.trans-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin: 1.3rem 0 0.4rem;
+}
+
+.trans {
+  flex: 1 1 150px;
+  border: 1px solid var(--hairline);
+  background: rgba(255, 253, 246, 0.6);
+  padding: 0.65rem 0.85rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.trans b {
+  display: block;
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.trans i { font-style: italic; }
+
+/* ---------- similarity matrix ---------- */
+
+.matrix { border-collapse: collapse; margin: 0.4rem 0 0.6rem; }
+
+.matrix th {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.matrix td {
+  border: 2px solid var(--paper);
+  padding: 0.5rem 0.6rem;
+  min-width: 4.2rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.matrix td.self { color: var(--ink-faint); background: transparent !important; }
+
+/* ---------- verse rows ---------- */
+
+.verse-row { border-bottom: 1px solid var(--hairline); }
+
+.verse-head {
+  display: grid;
+  grid-template-columns: 2.4rem 9.5rem 1fr 3.4rem;
+  gap: 0.8rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 0.2rem;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.verse-head:hover .verse-ref { color: var(--oxblood); }
+
+.verse-rank { font-size: 0.8rem; color: var(--ink-faint); text-align: right; }
+
+.verse-ref {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.score-track { height: 12px; }
+
+.score-bar {
+  display: block;
+  height: 100%;
+  background: var(--oxblood);
+  opacity: 0.82;
+  border-radius: 0 2px 2px 0;
+  min-width: 2px;
+}
+
+.verse-score {
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.verse-note {
+  margin: -0.2rem 0 0.5rem 3.2rem;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--gold);
+}
+.verse-note::before { content: "✳ "; }
+
+.verse-texts { margin: 0.2rem 0 0.9rem 3.2rem; }
+
+.vt {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  gap: 0.7rem;
+  padding: 0.28rem 0;
+  font-size: 0.97rem;
+}
+
+.vt b {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  padding-top: 0.15rem;
+}
+
+.vt span { color: var(--ink); }
+.vt.absent span { color: var(--ink-faint); font-style: italic; }
+
+/* ---------- filters ---------- */
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.filters button {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.2rem 0.85rem;
+  background: none;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.filters button.active { background: var(--ink); color: var(--paper); }
+
+/* ---------- presence dots (missing verses) ---------- */
+
+.dots { display: inline-flex; gap: 0.4rem; }
+
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-soft);
+}
+
+.dot.yes { background: var(--gold); border-color: var(--gold); }
+.dot.no { background: transparent; }
+
+.dots-legend { font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 0.7rem; }
+.dots-legend .dot { display: inline-block; vertical-align: -1px; margin: 0 0.25rem 0 0.6rem; }
+
+.miss-head { grid-template-columns: 9.5rem 8rem 1fr; }
+
+/* ---------- book bars ---------- */
+
+.book-row {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr 3.2rem;
+  gap: 0.8rem;
+  align-items: center;
+  margin: 0.22rem 0;
+}
+
+.book-name { font-size: 0.9rem; color: var(--ink-soft); text-align: right; }
+
+.book-track { height: 11px; }
+
+.book-bar {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  opacity: 0.85;
+  border-radius: 0 2px 2px 0;
+  min-width: 2px;
+}
+
+.book-val { font-size: 0.82rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+.method-note {
+  margin: 2.4rem 0 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--ink-faint);
+  max-width: 70ch;
+}
+
+/* ---------- colophon ---------- */
+
+.colophon {
+  padding: 0.6rem 1.6rem;
+  border-top: 1px solid var(--ink);
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.colophon a { color: var(--oxblood); }
+
+@media (max-width: 640px) {
+  .verse-head { grid-template-columns: 1.6rem 7.2rem 1fr 3rem; gap: 0.5rem; }
+  .verse-texts, .verse-note { margin-left: 0.4rem; }
+  .matrix td { min-width: 3rem; padding: 0.4rem 0.3rem; font-size: 0.85rem; }
+  .miss-head { grid-template-columns: 7.2rem 7rem 1fr; }
+  .book-row { grid-template-columns: 6.5rem 1fr 3rem; gap: 0.5rem; }
+}
