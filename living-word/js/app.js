@@ -81,10 +81,10 @@ const nodeById = new Map(nodes.map((n) => [n.id, n]));
 
 // ---------- state ----------
 
-const activeSections = new Set(Object.keys(SECTION_COLORS));
-let showTopics = true;
-let showPeople = true;
-let showTopical = true;
+// every filterable category: the 9 canon sections + the three overlays
+const OVERLAY_KEYS = { topic: "__theology", person: "__people", obtopic: "__topical" };
+const ALL_KEYS = [...Object.keys(SECTION_COLORS), ...Object.values(OVERLAY_KEYS)];
+let activeKeys = new Set(ALL_KEYS);
 let selected = null;
 let highlightNodes = new Set();
 let highlightLinks = new Set();
@@ -93,13 +93,17 @@ const nodeColor = (n) =>
   n.type === "topic" ? TOPIC_COLOR :
   n.type === "person" ? PERSON_COLOR :
   n.type === "obtopic" ? TOPICAL_COLOR :
+  n.type === "verse" ? tint(SECTION_COLORS[n.section], 0.55) :
   SECTION_COLORS[n.section];
 
-const nodeVisible = (n) =>
-  n.type === "topic" ? showTopics :
-  n.type === "person" ? showPeople :
-  n.type === "obtopic" ? showTopical :
-  activeSections.has(n.section);
+const nodeKey = (n) => OVERLAY_KEYS[n.type] ?? n.section;
+const nodeVisible = (n) => activeKeys.has(nodeKey(n));
+
+function tint(hex, f) {
+  const c = parseInt(hex.slice(1), 16);
+  const ch = (x) => Math.round(x + (255 - x) * f);
+  return `rgb(${ch((c >> 16) & 255)},${ch((c >> 8) & 255)},${ch(c & 255)})`;
+}
 
 // ---------- graph ----------
 
@@ -117,9 +121,9 @@ const Graph = new ForceGraph3D(document.getElementById("graph"), {
       : nodeColor(n)
   )
   .nodeVal((n) =>
-    n.type === "chapter"
-      ? 0.6 + 9 * Math.sqrt(n.strength / maxStrength)
-      : n.type === "obtopic" ? 3.5 : 5.5
+    n.type === "chapter" ? 0.6 + 9 * Math.sqrt(n.strength / maxStrength) :
+    n.type === "verse" ? n.val :
+    n.type === "obtopic" ? 3.5 : 5.5
   )
   .nodeOpacity(0.92)
   .nodeResolution(10)
@@ -132,9 +136,10 @@ const Graph = new ForceGraph3D(document.getElementById("graph"), {
   .linkColor((l) => {
     if (highlightLinks.size)
       return highlightLinks.has(l) ? "#ffd76a" : "rgba(120,120,150,0.05)";
+    if (l.vlink) return "rgba(233,226,207,0.10)";
     return l.overlay ? "rgba(255,215,106,0.22)" : "rgba(150,160,220,0.16)";
   })
-  .linkWidth((l) => (highlightLinks.has(l) ? 0.35 : 0))
+  .linkWidth((l) => (highlightLinks.has(l) ? (l.vlink ? 0.12 : 0.35) : 0))
   .linkOpacity(0.5)
   .warmupTicks(250)
   .onNodeClick(focusNode)
@@ -152,6 +157,7 @@ for (const l of links) {
   }
 }
 Graph.d3Force("link").strength((l) => {
+  if (l.vlink) return 0; // verse links are purely visual; layout is frozen
   if (l.overlay) return 0.06;
   const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
   return 1 / Math.min(linkCount.get(s), linkCount.get(t));
@@ -182,25 +188,160 @@ function shade(hex, f) {
   return `rgb(${r},${g},${b})`;
 }
 
+// ---------- verse expansion (unfold a chapter into its verses) ----------
+
+const verseDataCache = new Map(); // chapterId -> {n, in, out}
+const expandedSet = new Set();    // chapterIds currently unfolded
+let verseNodes = [];
+let currentLinks = links;         // links + dynamic verse links
+let layoutFrozen = false;
+
+const verseNodeId = (b, c, v) => `v:${b}:${c}:${v}`;
+
+async function getVerseData(cid) {
+  if (!verseDataCache.has(cid)) {
+    verseDataCache.set(
+      cid,
+      await fetch(`data/verses/${cid.replace(":", "-")}.json`).then((r) => r.json())
+    );
+  }
+  return verseDataCache.get(cid);
+}
+
+// deterministic geometry: verses sit on a Fibonacci-sphere shell around
+// their chapter, verse 1 at the top pole, in reading order downward
+function versePositions(cNode, n) {
+  const R = 26 + 3 * Math.sqrt(n);
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const y = 1 - (2 * (i + 0.5)) / n;
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    const th = golden * i;
+    pts.push([
+      cNode.x + R * r * Math.cos(th),
+      cNode.y + R * y,
+      cNode.z + R * r * Math.sin(th),
+    ]);
+  }
+  return pts;
+}
+
+async function toggleVerses(cid) {
+  const unfolding = !expandedSet.has(cid);
+  if (unfolding) {
+    await getVerseData(cid);
+    expandedSet.add(cid);
+  } else {
+    expandedSet.delete(cid);
+    if (selected?.type === "verse" && selected.chapter === cid) clearSelection();
+  }
+  rebuildVerseLayer();
+  if (selected) applyHighlight(selected);
+  if (selected?.id === cid) {
+    renderPanel(selected); // refresh fold/unfold label
+    if (unfolding) {
+      const n = selected;
+      const dist = 210;
+      const ratio = 1 + dist / Math.hypot(n.x, n.y, n.z || 1);
+      Graph.cameraPosition({ x: n.x * ratio, y: n.y * ratio, z: n.z * ratio }, n, 700);
+    }
+  }
+}
+
+function rebuildVerseLayer() {
+  // once verses exist, freeze the force layout so nothing drifts —
+  // warmupTicks must go to 0 too, or every graphData() update re-runs
+  // the 250 synchronous warmup ticks and shifts the whole layout
+  if (!layoutFrozen) {
+    Graph.cooldownTicks(0).warmupTicks(0);
+    layoutFrozen = true;
+  }
+
+  for (const vn of verseNodes) nodeById.delete(vn.id);
+  verseNodes = [];
+  const verseLinks = [];
+
+  for (const cid of expandedSet) {
+    const cNode = chapterById.get(cid);
+    const d = verseDataCache.get(cid);
+    const [b, c] = cid.split(":").map(Number);
+    const pts = versePositions(cNode, d.n);
+    const maxIn = Math.max(1, ...Object.values(d.in).map(Number));
+    for (let v = 1; v <= d.n; v++) {
+      const inN = d.in[v] || 0;
+      const [x, y, z] = pts[v - 1];
+      const node = {
+        id: verseNodeId(b, c, v),
+        label: `${cNode.label}:${v}`,
+        type: "verse",
+        section: cNode.section,
+        chapter: cid,
+        v,
+        inbound: inN,
+        val: 0.05 + 0.5 * Math.sqrt(inN / maxIn),
+        x, y, z, fx: x, fy: y, fz: z,
+      };
+      verseNodes.push(node);
+      nodeById.set(node.id, node);
+    }
+  }
+
+  // rebuild all verse-level links: verse -> verse when both chapters are
+  // unfolded, verse -> chapter aggregate otherwise
+  for (const cid of expandedSet) {
+    const d = verseDataCache.get(cid);
+    const [b, c] = cid.split(":").map(Number);
+    for (const [v, targets] of Object.entries(d.out)) {
+      const src = verseNodeId(b, c, +v);
+      if (!nodeById.has(src)) continue; // TSK verse beyond BSB verse count
+      const aggregated = new Set();
+      for (const [tb, tc, tv] of targets) {
+        const tcid = `${tb}:${tc}`;
+        const tvid = verseNodeId(tb, tc, tv);
+        if (expandedSet.has(tcid) && nodeById.has(tvid)) {
+          verseLinks.push({ source: src, target: tvid, w: 1, vlink: true });
+        } else if (chapterById.has(tcid) && !aggregated.has(tcid)) {
+          aggregated.add(tcid);
+          verseLinks.push({ source: src, target: tcid, w: 1, vlink: true });
+        }
+      }
+    }
+  }
+
+  currentLinks = [...links, ...verseLinks];
+  Graph.graphData({ nodes: [...nodes, ...verseNodes], links: currentLinks });
+  foldAllBtn.style.display = expandedSet.size ? "" : "none";
+  foldAllBtn.innerHTML = `✕ Fold verses (${expandedSet.size})`;
+}
+
 // ---------- selection & focus ----------
 
-function focusNode(node) {
-  if (!node) return;
-  selected = node;
+function applyHighlight(node) {
   highlightNodes = new Set([node.id]);
   highlightLinks = new Set();
-  for (const l of links) {
+  for (const l of currentLinks) {
     const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
     if (s === node.id || t === node.id) {
       highlightLinks.add(l);
       highlightNodes.add(s === node.id ? t : s);
     }
   }
+  // an unfolded chapter's verses always stay lit alongside it
+  if (node.type === "chapter" && expandedSet.has(node.id))
+    for (const vn of verseNodes)
+      if (vn.chapter === node.id) highlightNodes.add(vn.id);
   Graph.nodeColor(Graph.nodeColor())
     .linkColor(Graph.linkColor())
     .linkWidth(Graph.linkWidth());
+}
 
-  const dist = 320;
+function focusNode(node) {
+  if (!node) return;
+  selected = node;
+  applyHighlight(node);
+
+  const dist = node.type === "verse" ? 120 : 320;
   const ratio = 1 + dist / Math.hypot(node.x, node.y, node.z || 1);
   Graph.cameraPosition(
     { x: node.x * ratio, y: node.y * ratio, z: node.z * ratio },
@@ -259,6 +400,7 @@ function renderPanel(node) {
   panel.classList.remove("hidden");
   panelBody.innerHTML =
     node.type === "chapter" ? chapterHTML(node) :
+    node.type === "verse" ? verseHTML(node) :
     node.type === "obtopic" ? topicalHTML(node) :
     overlayHTML(node);
   panelBody.querySelectorAll("[data-go]").forEach((el) => {
@@ -271,7 +413,11 @@ function renderPanel(node) {
       openReader(cid, verse ? +verse : null);
     };
   });
+  panelBody.querySelectorAll("[data-unfold]").forEach((el) => {
+    el.onclick = () => toggleVerses(el.dataset.unfold);
+  });
   if (node.type === "chapter") hydrateVerseText(node);
+  if (node.type === "verse") hydrateVersePanel(node);
   if (!reader.classList.contains("hidden") && node.type === "chapter")
     openReader(node.id);
 }
@@ -283,6 +429,15 @@ async function hydrateVerseText(node) {
     const t = texts[+el.dataset.vtext - 1];
     el.textContent = t || "Not in the BSB main text — carried as a footnote.";
   });
+}
+
+async function hydrateVersePanel(node) {
+  const texts = await getChapterText(node.chapter);
+  if (selected !== node) return;
+  const el = panelBody.querySelector("#verse-full-text");
+  if (el)
+    el.textContent =
+      texts[node.v - 1] || "Not in the BSB main text — carried as a footnote.";
 }
 
 function chapterHTML(node) {
@@ -327,9 +482,39 @@ function chapterHTML(node) {
     <h2>${esc(node.label)}</h2>
     <p class="sub">${fmt(node.strength)} cross-reference connections</p>
     <button class="read-btn" data-read="${node.id}">Read this chapter</button>
+    <button class="read-btn" data-unfold="${node.id}" style="margin-left:8px">
+      ${expandedSet.has(node.id) ? "Fold verses" : "Unfold verses"}</button>
     ${d.verses.length ? `<h3>Most referenced verses</h3><ul class="rowlist">${verses}</ul>` : ""}
     ${d.conn.length ? `<h3>Strongest connections</h3><ul class="rowlist">${conns}</ul>` : ""}
     ${tags ? `<h3>Appears in</h3><div class="taglist">${tags}</div>` : ""}
+  `;
+}
+
+function verseHTML(node) {
+  const color = nodeColor(node);
+  const cNode = chapterById.get(node.chapter);
+  const out = (verseDataCache.get(node.chapter)?.out || {})[node.v] || [];
+  const rows = out
+    .map(([tb, tc, tv]) => {
+      const tcid = `${tb}:${tc}`;
+      const tChap = chapterById.get(tcid);
+      if (!tChap) return "";
+      const tvid = verseNodeId(tb, tc, tv);
+      const go = nodeById.has(tvid) ? tvid : tcid;
+      return `<li class="link" data-go="${go}">
+        <span style="color:${SECTION_COLORS[tChap.section]}">${esc(tChap.label)}:${tv}</span>
+        <span class="count">${expandedSet.has(tcid) ? "unfolded" : ""}</span>
+      </li>`;
+    })
+    .join("");
+  return `
+    <div class="eyebrow"><span class="dot" style="color:${color};background:${color}"></span>${esc(node.section)} · Verse</div>
+    <h2>${esc(node.label)}</h2>
+    <p class="sub">${fmt(node.inbound)} inbound references</p>
+    <p class="desc" id="verse-full-text">…</p>
+    <button class="read-btn" data-read="${node.chapter}@${node.v}">Read in context</button>
+    <button class="read-btn" data-go="${node.chapter}" style="margin-left:8px">${esc(cNode.label)}</button>
+    ${rows ? `<h3>References (${out.length})</h3><ul class="rowlist">${rows}</ul>` : ""}
   `;
 }
 
@@ -439,28 +624,59 @@ document.getElementById("reader-close").onclick = () => {
 // ---------- filters ----------
 
 const filtersEl = document.getElementById("filters");
+const chipByKey = new Map();
 
-function addChip(label, color, isOn, onToggle, special = false) {
+function refreshChips() {
+  for (const [key, chip] of chipByKey)
+    chip.classList.toggle("off", !activeKeys.has(key));
+  Graph.nodeVisibility(Graph.nodeVisibility()).linkVisibility(Graph.linkVisibility());
+}
+
+// click isolates the category; clicking the lone active chip brings all back;
+// shift-click toggles a single category in or out of the current view
+function chipClick(key, e) {
+  if (e.shiftKey) {
+    activeKeys.has(key) ? activeKeys.delete(key) : activeKeys.add(key);
+    if (!activeKeys.size) activeKeys = new Set(ALL_KEYS);
+  } else if (activeKeys.size === 1 && activeKeys.has(key)) {
+    activeKeys = new Set(ALL_KEYS);
+  } else {
+    activeKeys = new Set([key]);
+  }
+  refreshChips();
+}
+
+function addChip(key, label, color, special = false) {
   const chip = document.createElement("button");
-  chip.className = "chip" + (special ? " special" : "") + (isOn() ? "" : " off");
+  chip.className = "chip" + (special ? " special" : "");
+  chip.title = "Click to isolate · shift-click to toggle";
   chip.innerHTML = `<span class="dot" style="color:${color};background:${color}"></span>${label}`;
-  chip.onclick = () => {
-    onToggle();
-    chip.classList.toggle("off", !isOn());
-    Graph.nodeVisibility(Graph.nodeVisibility()).linkVisibility(Graph.linkVisibility());
-  };
+  chip.onclick = (e) => chipClick(key, e);
+  chipByKey.set(key, chip);
   filtersEl.appendChild(chip);
 }
 
 for (const [section, color] of Object.entries(SECTION_COLORS)) {
-  addChip(section, color,
-    () => activeSections.has(section),
-    () => activeSections.has(section) ? activeSections.delete(section) : activeSections.add(section)
-  );
+  addChip(section, section, color);
 }
-addChip("Theology", TOPIC_COLOR, () => showTopics, () => (showTopics = !showTopics), true);
-addChip("People", PERSON_COLOR, () => showPeople, () => (showPeople = !showPeople), true);
-addChip("Topics", TOPICAL_COLOR, () => showTopical, () => (showTopical = !showTopical), true);
+addChip(OVERLAY_KEYS.topic, "Theology", TOPIC_COLOR, true);
+addChip(OVERLAY_KEYS.person, "People", PERSON_COLOR, true);
+addChip(OVERLAY_KEYS.obtopic, "Topics", TOPICAL_COLOR, true);
+
+const foldAllBtn = document.createElement("button");
+foldAllBtn.className = "chip special";
+foldAllBtn.style.display = "none";
+foldAllBtn.onclick = () => {
+  const keepPanel = selected?.type === "chapter" ? selected : null;
+  if (selected?.type === "verse") clearSelection();
+  expandedSet.clear();
+  rebuildVerseLayer();
+  if (keepPanel) renderPanel(keepPanel);
+};
+filtersEl.appendChild(foldAllBtn);
+
+// console/deep-link hook
+window.__lw = { goTo, toggleVerses, nodeById };
 
 // ---------- search ----------
 
