@@ -19,6 +19,7 @@
     { slug: "preached", label: "Preached", title: "Preached — a sermon archive shaped like the Bible" },
     { slug: "living-word", label: "Living Word", title: "The Living Word — 3D knowledge graph of Scripture" },
     { slug: "translations", label: "Other Words", title: "In Other Words — where translations part ways" },
+    { slug: "translation-tree", label: "Tree", title: "The Translation Tree — a family tree of the English Bible" },
     { slug: "church-map", label: "Churches", title: "A Church Nearby — two directories, one map" },
     { slug: "romans-road", label: "Romans Road", title: "The Romans Road — a guided walk" }
   ];
