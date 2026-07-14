@@ -199,6 +199,51 @@ const WRITINGS = [
     refs: [["Proverbs 1", "Prov.1.1"], ["Song of Solomon 1", "Song.1.1"], ["Ecclesiastes 1", "Eccl.1.1"]] },
 ];
 
+/* The running text: which chapters narrate each stretch of the period.
+   Rail 0 = Samuel–Kings, rail 1 = Chronicles. Dates follow the reign dates
+   above; blocks are cut at natural seams in the narrative. */
+const CHAPTERS = [
+  { name: "1 Samuel 1–8", short: "1 Sam 1–8", rail: 0, start: 1060, end: 1050, osis: "1Sam.1.1",
+    note: "Samuel's birth, call, and judgeship — and Israel's demand for a king. (The story begins c. 1100; the chart opens here.)" },
+  { name: "1 Samuel 9–31", short: "1 Sam 9–31", rail: 0, start: 1050, end: 1010, osis: "1Sam.9.1",
+    note: "Saul anointed and rejected; David anointed, hunted through the wilderness, sparing his king twice." },
+  { name: "2 Samuel 1–24", short: "2 Sam 1–24", rail: 0, start: 1010, end: 971, osis: "2Sam.1.1",
+    note: "David's reign: the covenant promise of an everlasting house — then Bathsheba, and Absalom." },
+  { name: "1 Kings 1–11", short: "1 Kgs 1–11", rail: 0, start: 971, end: 931, osis: "1Kgs.1.1",
+    note: "Solomon: the temple built and filled, wisdom the world came to hear, a heart turned by many wives." },
+  { name: "1 Kings 12–16", short: "1 Kgs 12–16", rail: 0, start: 931, end: 874, osis: "1Kgs.12.1",
+    note: "The kingdom splits at Shechem; Jeroboam's golden calves; northern dynasties rise and murder each other." },
+  { name: "1 Kings 17–22", short: "1 Kgs 17–22", rail: 0, start: 874, end: 853, osis: "1Kgs.17.1",
+    note: "Elijah against Ahab: fire on Carmel, Naboth's vineyard, the arrow at Ramoth-gilead." },
+  { name: "2 Kings 1–8", short: "2 Kgs 1–8", rail: 0, start: 853, end: 841, osis: "2Kgs.1.1",
+    note: "The whirlwind takes Elijah; Elisha's ministry — healed water, fed hundreds, Naaman washed clean." },
+  { name: "2 Kings 9–13", short: "2 Kgs 9–13", rail: 0, start: 841, end: 796, osis: "2Kgs.9.1",
+    note: "Jehu's furious purge of Ahab's house; Athaliah's coup in Judah and the boy-king Joash hidden in the temple." },
+  { name: "2 Kings 14–17", short: "2 Kgs 14–17", rail: 0, start: 796, end: 722, osis: "2Kgs.14.1",
+    note: "The long slide north — six kings fall to conspiracy — until Assyria takes Samaria and Israel is scattered." },
+  { name: "2 Kings 18–20", short: "2 Kgs 18–20", rail: 0, start: 722, end: 687, osis: "2Kgs.18.1",
+    note: "Hezekiah trusts the LORD against Sennacherib; the angel strikes the camp; fifteen years added to a life." },
+  { name: "2 Kings 21–23", short: "2 Kgs 21–23", rail: 0, start: 687, end: 609, osis: "2Kgs.21.1",
+    note: "Manasseh's half-century of darkness; the Book of the Law found in the rubble and Josiah's reform." },
+  { name: "2 Kings 24–25", short: "2 Kgs 24–25", rail: 0, start: 609, end: 560, osis: "2Kgs.24.1",
+    note: "Three deportations; the temple burned. The book ends with David's heir lifted from a Babylonian prison." },
+
+  { name: "1 Chronicles 10–29", short: "1 Chr 10–29", rail: 1, start: 1010, end: 971, osis: "1Chr.10.1",
+    note: "Saul's end in a single chapter, then David seen from the temple's side: the ark brought up, the plans drawn, Solomon charged." },
+  { name: "2 Chronicles 1–9", short: "2 Chr 1–9", rail: 1, start: 971, end: 931, osis: "2Chr.1.1",
+    note: "Solomon's temple: built, dedicated, filled with the glory of the LORD." },
+  { name: "2 Chronicles 10–16", short: "2 Chr 10–16", rail: 1, start: 931, end: 871, osis: "2Chr.10.1",
+    note: "Judah's story told alone: Rehoboam to Asa — the Chronicler passes over the northern kings entirely." },
+  { name: "2 Chronicles 17–20", short: "2 Chr 17–20", rail: 1, start: 871, end: 849, osis: "2Chr.17.1",
+    note: "Jehoshaphat sends teachers of the law through the cities of Judah; a choir leads the army to war." },
+  { name: "2 Chronicles 21–28", short: "2 Chr 21–28", rail: 1, start: 849, end: 715, osis: "2Chr.21.1",
+    note: "From Jehoram's fratricide to Ahaz nailing the temple doors shut — with Joash, Uzziah, and Jotham between." },
+  { name: "2 Chronicles 29–32", short: "2 Chr 29–32", rail: 1, start: 715, end: 687, osis: "2Chr.29.1",
+    note: "Hezekiah reopens the doors in his first month and keeps a Passover Israel had not seen since Solomon." },
+  { name: "2 Chronicles 33–36", short: "2 Chr 33–36", rail: 1, start: 687, end: 555, osis: "2Chr.33.1",
+    note: "Manasseh repents in Babylonian chains; Josiah's Passover; the fall — and the book's last word is Cyrus's decree to go home." },
+];
+
 const EVENTS = [
   { year: 931, label: "The kingdom divides", note: "Rehoboam's harsh answer at Shechem; ten tribes follow Jeroboam." },
   { year: 722, label: "Samaria falls to Assyria", note: "The northern kingdom ends; Israel deported (2 Kings 17)." },
