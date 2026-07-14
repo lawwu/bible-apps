@@ -14,6 +14,8 @@ const W = 1200;
 const DOMAIN = [1060, 555];
 const KING_LANE_H = 26;
 const PROPHET_LANE_H = 15;
+const CHAP_LANE_H = 16;
+const CHAP_COLOR = "#5c5240";
 
 /* ---------- lane packing (years are BC: start > end) ---------- */
 
@@ -54,6 +56,8 @@ bands.capJK = caption();
 bands.jk = cursor; cursor += jkLanes * KING_LANE_H + 6;
 bands.capJP = caption();
 bands.jp = cursor; cursor += jpLanes * PROPHET_LANE_H + 8;
+bands.capCH = caption();
+bands.ch = cursor; cursor += 2 * CHAP_LANE_H + 6;
 bands.writings = cursor + 8; cursor += 26;
 bands.axis = cursor + 8;
 const H = bands.axis + 30;
@@ -63,6 +67,7 @@ const CAPTIONS = [
   [bands.capIK, "KINGS OF ISRAEL — the northern kingdom"],
   [bands.capJK, "KINGS OF JUDAH — the southern kingdom, the line of David"],
   [bands.capJP, "Prophets to Judah & the exiles"],
+  [bands.capCH, "THE CHAPTERS — Samuel–Kings above, Chronicles below"],
 ];
 
 /* ---------- svg scaffold ---------- */
@@ -86,6 +91,7 @@ const gCaptions = gMain.append("g");
 const gUnited = gMain.append("g");
 const gKings = gMain.append("g");
 const gProphets = gMain.append("g");
+const gChapters = gMain.append("g");
 const gWritings = gMain.append("g");
 const gAxis = gMain.append("g").attr("class", "axis").attr("transform", `translate(0,${bands.axis})`);
 
@@ -180,6 +186,21 @@ prophetSel.append("text").attr("class", "prophet-label")
   .attr("y", (d) => prophetY(d) + 10.5)
   .text((d) => (d.book ? "¶ " : "") + d.name);
 
+/* the running text: which chapters narrate each stretch */
+const chapSel = gChapters.selectAll("g").data(CHAPTERS).join("g")
+  .attr("class", "chap-bar")
+  .on("click", (e, d) => showDetail(d, "chapter"))
+  .on("mouseenter", (e, d) => showTip(e, `c. ${d.start}\u2013${d.end} BC`, d.name, d.note))
+  .on("mousemove", moveTip)
+  .on("mouseleave", hideTip);
+chapSel.append("rect").attr("class", "body")
+  .attr("y", (d) => bands.ch + d.rail * CHAP_LANE_H + 1)
+  .attr("height", CHAP_LANE_H - 4)
+  .attr("fill", CHAP_COLOR)
+  .attr("opacity", (d, i) => (i % 2 ? 0.36 : 0.22));
+chapSel.append("text").attr("class", "chap-label")
+  .attr("y", (d) => bands.ch + d.rail * CHAP_LANE_H + CHAP_LANE_H / 2 + 2.5);
+
 /* writings */
 const writeSel = gWritings.selectAll("g").data(WRITINGS).join("g")
   .attr("class", "writing-mark")
@@ -248,6 +269,12 @@ function update() {
       if (d.start === d.end) return zx === x0 ? "none" : null;
       return barW(d) >= 18 ? null : "none";
     });
+
+  chapSel.select("rect").attr("x", barX).attr("width", barW);
+  chapSel.select("text")
+    .attr("x", (d) => Math.max(zx(d.start), 0) + 4)
+    .text((d) => textFits(d.name, barW(d)) ? d.name :
+                 textFits(d.short, barW(d)) ? d.short : "");
 
   writeSel.select("rect")
     .attr("transform", (d) => `translate(${zx(d.year)},${bands.writings}) rotate(45)`);
@@ -419,6 +446,10 @@ function showDetail(d, type) {
       + (d.book ? ` · wrote ${d.book}` : "");
     color = d.kingdom === "exile" ? "#5c5240" : PROPHET_COLOR;
     dates = ministryLine(d);
+  } else if (type === "chapter") {
+    kicker = "The running text \u00b7 Scripture";
+    color = CHAP_COLOR;
+    dates = `c. ${d.start}\u2013${d.end} BC`;
   } else if (type === "writing") {
     kicker = "Writings";
     color = GOLD;
@@ -430,7 +461,7 @@ function showDetail(d, type) {
   }
 
   const name = d.name || d.label;
-  const refs = (d.refs || []).map(([label, osis]) =>
+  const refs = (d.refs || (d.osis ? [[`Read ${d.name}`, d.osis]] : [])).map(([label, osis]) =>
     `<a href="../verse-explorer/#${osis}">${label}</a>`).join("");
 
   document.getElementById("detail").innerHTML = `

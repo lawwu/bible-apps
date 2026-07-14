@@ -309,3 +309,13 @@ body {
   .detail-name { font-size: 1.7rem; }
   .detail-note { font-size: 1.1rem; }
 }
+
+/* the running-text rails */
+.chap-bar { cursor: pointer; }
+.chap-bar:hover rect.body { opacity: 0.55; }
+.chap-label {
+  font-size: 10.5px;
+  font-style: italic;
+  fill: #3d3527;
+  pointer-events: none;
+}
