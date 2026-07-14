@@ -105,6 +105,72 @@ function tint(hex, f) {
   return `rgb(${ch((c >> 16) & 255)},${ch((c >> 8) & 255)},${ch(c & 255)})`;
 }
 
+// ---------- canon layout (the default arrangement) ----------
+// After bible-kg's Scripture Constellation: the 66 books on a descending
+// helix — Genesis at the top, Revelation at the bottom, OT above NT — each
+// book's chapters in a phyllotaxis cluster around its center. The organic
+// force-directed cloud is available as a toggle.
+let canonOn = true;
+let origPos = null;          // organic positions, captured once simulated
+let captureOrganic = false;  // set while the organic simulation runs
+
+const hash01 = (s) => {
+  let h = 2166136261;
+  for (const ch of s) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 1000) / 1000;
+};
+
+function canonCoords() {
+  const coords = new Map();
+  const centers = new Map();
+  for (let b = 1; b <= 66; b++) {
+    const t = (b - 1) / 65;
+    const y = 780 - t * 1560;                       // top-down canon order
+    const angle = (b - 1) * 0.84 + (b >= 40 ? 0.6 : 0);
+    const waist = Math.abs(t - 0.58);
+    const R = 180 + waist * 380 + 40 * Math.sin(b * 0.51);
+    centers.set(b, [Math.cos(angle) * R, y, Math.sin(angle) * R]);
+  }
+  const byBook = new Map();
+  for (const n of graphData.nodes) {
+    const b = +n.id.split(":")[0];
+    if (!byBook.has(b)) byBook.set(b, []);
+    byBook.get(b).push(n);
+  }
+  for (const [b, chs] of byBook) {
+    const [cx, cy, cz] = centers.get(b);
+    chs.sort((m, q) => +m.id.split(":")[1] - +q.id.split(":")[1]);
+    chs.forEach((n, i) => {
+      const a = i * 2.399963 + hash01(n.id) * 2.8;  // golden-angle spiral
+      const r = 34 + Math.sqrt((i + 1) / chs.length) * 100;
+      coords.set(n.id, [cx + Math.cos(a) * r,
+                        cy + (hash01(n.id) - 0.5) * 90,
+                        cz + Math.sin(a) * r]);
+    });
+  }
+  // overlay lenses ring the column, as in bible-kg
+  overlayNodes.forEach((n, i) => {
+    const ring = n.type === "topic" ? 880 : n.type === "person" ? 960 : 1050;
+    const a = i * 2.399963;
+    coords.set(n.id, [Math.cos(a) * ring,
+                      (hash01(n.id) - 0.5) * 1400,
+                      Math.sin(a) * ring]);
+  });
+  return coords;
+}
+
+function pinTo(target) {
+  for (const n of nodes) {
+    const p = target.get(n.id);
+    if (!p) continue;
+    [n.x, n.y, n.z] = p;
+    [n.fx, n.fy, n.fz] = p;
+  }
+}
+
+// canon by default: positions are deterministic, so no warmup is needed
+pinTo(canonCoords());
+
 // ---------- graph ----------
 
 const maxStrength = Math.max(...graphData.nodes.map((n) => n.strength));
@@ -141,7 +207,8 @@ const Graph = new ForceGraph3D(document.getElementById("graph"), {
   })
   .linkWidth((l) => (highlightLinks.has(l) ? (l.vlink ? 0.12 : 0.35) : 0))
   .linkOpacity(0.5)
-  .warmupTicks(250)
+  .warmupTicks(0)
+  .cooldownTicks(0)
   .onNodeClick(focusNode)
   .onBackgroundClick(clearSelection);
 
@@ -169,14 +236,17 @@ const bloomPass = new UnrealBloomPass(
 );
 Graph.postProcessingComposer().addPass(bloomPass);
 
-Graph.cameraPosition({ x: 0, y: 0, z: 1600 });
+Graph.cameraPosition({ x: 0, y: 0, z: 2500 });
 
-// frame the fully-settled graph once the engine cools down
-let framed = false;
+// when the organic simulation finishes, pin its result so later data
+// updates can't disturb it (the canon default needs no framing — the
+// initial cameraPosition already fits the column)
 Graph.onEngineStop(() => {
-  if (!framed && !selected) {
-    framed = true;
-    Graph.zoomToFit(600, 60);
+  if (captureOrganic) {
+    captureOrganic = false;
+    origPos = new Map(nodes.map((n) => [n.id, [n.x, n.y, n.z]]));
+    pinTo(origPos);
+    Graph.cooldownTicks(0);
   }
 });
 
@@ -194,7 +264,7 @@ const verseDataCache = new Map(); // chapterId -> {n, in, out}
 const expandedSet = new Set();    // chapterIds currently unfolded
 let verseNodes = [];
 let currentLinks = links;         // links + dynamic verse links
-let layoutFrozen = false;
+let layoutFrozen = true;          // canon default pins every node from load
 
 const verseNodeId = (b, c, v) => `v:${b}:${c}:${v}`;
 
@@ -663,6 +733,40 @@ addChip(OVERLAY_KEYS.topic, "Theology", TOPIC_COLOR, true);
 addChip(OVERLAY_KEYS.person, "People", PERSON_COLOR, true);
 addChip(OVERLAY_KEYS.obtopic, "Topics", TOPICAL_COLOR, true);
 
+// ---------- layout toggle: canon order (default) vs organic cloud ----------
+function setCanon(on) {
+  canonOn = on;
+  if (on) {
+    // leaving a live organic view? remember it before pinning to canon
+    if (!origPos && nodes.some((n) => n.fx == null)) {
+      origPos = new Map(nodes.map((n) => [n.id, [n.x, n.y, n.z]]));
+    }
+    pinTo(canonCoords());
+    Graph.cooldownTicks(60);
+  } else if (origPos) {
+    pinTo(origPos);
+    Graph.cooldownTicks(60);
+  } else {
+    // first organic visit: release everything and let the forces find the
+    // cloud; onEngineStop captures and pins the result
+    for (const n of nodes) { delete n.fx; delete n.fy; delete n.fz; }
+    captureOrganic = true;
+    Graph.cooldownTicks(400);
+  }
+  Graph.d3ReheatSimulation();
+  if (expandedSet.size) rebuildVerseLayer();
+  Graph.cameraPosition({ x: 0, y: 0, z: on ? 2500 : 1600 },
+                       { x: 0, y: 0, z: 0 }, 1200);
+  canonBtn.classList.toggle("off", !on);
+}
+
+const canonBtn = document.createElement("button");
+canonBtn.className = "chip special";
+canonBtn.title = "Canon order — Genesis at the top, Revelation at the bottom. Click to switch to the organic cross-reference cloud and back.";
+canonBtn.innerHTML = `<span class="dot" style="color:#d4a83b;background:#d4a83b"></span>Canon order`;
+canonBtn.onclick = () => setCanon(!canonOn);
+filtersEl.appendChild(canonBtn);
+
 const foldAllBtn = document.createElement("button");
 foldAllBtn.className = "chip special";
 foldAllBtn.style.display = "none";
@@ -676,7 +780,7 @@ foldAllBtn.onclick = () => {
 filtersEl.appendChild(foldAllBtn);
 
 // console/deep-link hook
-window.__lw = { goTo, toggleVerses, nodeById };
+window.__lw = { goTo, toggleVerses, nodeById, Graph, setCanon };
 
 // ---------- search ----------
 
