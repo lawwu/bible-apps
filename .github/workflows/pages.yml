@@ -9,6 +9,7 @@ on:
       - "verse-explorer/**"
       - "kings-timeline/**"
       - "translation-tree/**"
+      - "denomination-tree/**"
       - "translations/**"
       - "church-map/**"
       - "romans-road/**"
@@ -42,6 +43,7 @@ jobs:
           cp -r verse-explorer dist/
           cp -r kings-timeline dist/
           cp -r translation-tree dist/
+          cp -r denomination-tree dist/
           cp -r translations dist/
           cp -r church-map dist/
           cp -r romans-road dist/
