@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Denomination Tree — how one church became many</title>
+<meta name="description" content="A family tree of Christian denominations: from the undivided church through the Great Schism and the Reformation to the Pentecostals and the non-denominational tide — every branch and where it came from.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=EB+Garamond:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script defer src="../shared/nav.js"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-left">
+    <h1 class="wordmark"><a href="../">Bible apps</a> · The Denomination <em>Tree</em></h1>
+    <p class="tagline">how one church became many — schisms, awakenings, and mergers, AD 33 to today</p>
+  </div>
+  <nav class="views" aria-label="Trace a lineage">
+    <button data-trace="sbc">Trace the Baptists</button>
+    <button data-trace="azusa">Trace Pentecostalism</button>
+    <button data-trace="gmc">Trace Methodism</button>
+    <button data-trace="">Show all</button>
+  </nav>
+</header>
+
+<section class="legend-bar">
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#6b4f9e"></span>Eastern churches</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#a97d1c"></span>Catholic</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#8b2a1d"></span>Lutheran</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#2f4b7c"></span>Reformed</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#5f7134"></span>Anglican</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#0e7a83"></span>believers'-baptism</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#b3541e"></span>Methodist–Holiness</span>
+  <span class="legend-item"><span class="swatch chip-swatch" style="--c:#9c2760"></span>Pentecostal</span>
+  <span class="legend-item"><svg class="edge-swatch" viewBox="0 0 34 10" aria-hidden="true"><line x1="1" y1="5" x2="33" y2="5"></line></svg>separation · union</span>
+  <span class="legend-item"><svg class="edge-swatch dashed" viewBox="0 0 34 10" aria-hidden="true"><line x1="1" y1="5" x2="33" y2="5"></line></svg>influence</span>
+  <span class="legend-hint">the bar under a church ≈ adherents today (√ scale) · click any church to light its whole lineage</span>
+</section>
+
+<main class="chart-wrap">
+  <svg id="chart" role="img"></svg>
+  <div id="tooltip" class="tooltip" hidden></div>
+</main>
+<p class="scroll-hint">swipe the chart sideways · tap a church for its story</p>
+
+<section id="detail" class="detail" aria-live="polite">
+  <p class="detail-hint">Click any church above to trace its whole lineage and read its story here.</p>
+</section>
+
+<details class="table-view">
+  <summary>Every branch, as a table</summary>
+  <div class="table-scroll">
+    <table id="trans-table">
+      <thead>
+        <tr><th>Year</th><th>Church</th><th>Family</th><th>Polity</th><th>Adherents</th><th>Descends from</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</details>
+
+<footer class="colophon">
+  Adherent figures are rough 2020s estimates — family nodes carry family totals and movements
+  overlap (Pentecostalism's ~600M spans many branches) · dates mark formal separations, foundings, or unions — the convictions behind them usually run
+  older · a chart this size must simplify: many honored churches and unions are not drawn ·
+  placement describes history, not judgment — every branch here confesses the same Lord ·
+  made with Claude Fable 5 (High) · part of <a href="../">Bible apps</a>
+</footer>
+
+<script src="data.js?v=3"></script>
+<script src="app.js?v=3"></script>
+</body>
+</html>

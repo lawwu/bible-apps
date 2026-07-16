@@ -49,6 +49,11 @@ Made with [Open Bible](https://www.openbible.info/) data and Claude Fable 5 (Hig
   their verdict in Scripture, the prophets who confronted them, the books
   being written, and every reign linked into the cross-reference explorer.
   Dates follow the ESV Global Study Bible charts.
+- **[The Denomination Tree](denomination-tree/)** (`denomination-tree/`) — a
+  family tree of Christian denominations, AD 33 to today: the Great Schism,
+  the four Reformation streams, the awakenings, Azusa Street, the mainline
+  mergers and the newest splits — every branch clickable to light its whole
+  lineage. Same engine as the Translation Tree.
 - **[The Translation Tree](translation-tree/)** (`translation-tree/`) — a
   family tree of the English Bible, 1382–2025: Wycliffe and Tyndale down
   through the KJV to the ESV, NASB, LSB, NIV and the rest, color-coded by
