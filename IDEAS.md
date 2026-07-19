@@ -69,13 +69,29 @@ site can get to handing someone a study Bible. Main work is normalizing the
 commentary sources' verse addressing.
 
 ### 7. Bible atlas — where it happened
-OpenBible.info publishes geocoded coordinates for the Bible's ~1,300
-identifiable places (CC-BY, same source family as the cross-references), and
-Theographic (already in-repo) links places to verses. Leaflet experience
-exists from `church-map/`. The distinctive feature: animated narrative
-journeys — Abraham's migration, the Exodus, David's flight from Saul, Paul's
-four journeys — each leg linked to the chapter narrating it. "Where is this
-happening?" is one of the most common comprehension gaps in Bible reading.
+v1 is a **Bible Mapper integration**: David Barrett's Bible Mapper Atlas
+(biblemapper.com/blog) has posted hundreds of passage-anchored maps since
+2019, with a chronological master list at `/blog/chronolist/`. Scrape it
+politely (church-map scraper hygiene), extract passage refs with the
+`preached/` reference parser, and emit a chapter-keyed `biblemapper.json` —
+then verse-explorer verse pages grow "Maps for this passage" chips (the
+sermon-chip pattern), kings-timeline reigns link their era's maps, and Romans
+Road links Paul's journeys. Deep-linking his posts is safe under any terms;
+his premade collections elsewhere are CC BY-NC with attribution
+(FreeBibleimages), so rehosting images/thumbnails needs his OK — he granted
+exactly that to Bible Gateway and FreeBibleimages, and maps made in the Bible
+Mapper app itself are copyright-free. His own PassageBrowser/MapFinder/
+ReferenceMapper already do reference→map on his site; our edge is joining
+maps to this repo's data, not search.
+v2: OpenBible's geocoded places (~1,300, CC-BY, same source family as the
+cross-references) + Theographic place links on a Leaflet map (`church-map/`
+experience) with animated narrative journeys — Abraham's migration, the
+Exodus, David's flight from Saul, Paul's four journeys — each leg linked to
+the chapter narrating it. v3, with permission: georeference his maps (OCR
+the place labels, match against OpenBible coordinates, solve the transform)
+and drape them over modern terrain as toggleable Leaflet overlays.
+Note: biblemapper.com is unreachable from the remote sandbox's egress; the
+scraper runs locally like the other gitignored source pipelines.
 
 ### 8. Four witnesses — Gospel harmony / parallel-passage viewer
 Pericope-aligned side-by-side Gospels with differences highlighted — the
