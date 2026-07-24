@@ -16,6 +16,7 @@ on:
       - "preached/**"
       - "living-word/**"
       - "christian-book-index/**"
+      - "theological-triage/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -51,6 +52,7 @@ jobs:
           cp -r preached dist/
           cp -r living-word dist/
           cp -r christian-book-index dist/
+          cp -r theological-triage dist/
           # build tooling isn't part of the site
           rm -rf dist/*/scripts dist/church-map/scraper dist/church-map/sources dist/translations/sources
       - uses: actions/configure-pages@v5

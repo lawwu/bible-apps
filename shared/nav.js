@@ -22,6 +22,7 @@
     { slug: "translation-tree", label: "Tree", title: "The Translation Tree — a family tree of the English Bible" },
     { slug: "denomination-tree", label: "Branches", title: "The Denomination Tree — how one church became many" },
     { slug: "church-map", label: "Churches", title: "A Church Nearby — two directories, one map" },
+    { slug: "theological-triage", label: "Triage", title: "Theological Triage — a sorting room for doctrine" },
     { slug: "romans-road", label: "Romans Road", title: "The Romans Road — a guided walk" }
   ];
 
