@@ -59,6 +59,12 @@ Made with [Open Bible](https://www.openbible.info/) data and Claude Fable 5 (Hig
   through the KJV to the ESV, NASB, LSB, NIV and the rest, color-coded by
   textual stream (Vulgate, Textus Receptus, or critical Greek text). Click
   any Bible to light up its whole lineage, ancestors and heirs alike.
+- **[Theological Triage](theological-triage/)** (`theological-triage/`) — Al
+  Mohler's four-level sorting of doctrine, demonstrated as an emergency ward:
+  the four priority tags (with Marc Minter's fourth level for matters of
+  conscience), Joe Rigney's three weighing questions, an interactive sorting
+  room with twelve cases to triage yourself, and the four classic failure
+  modes — fundamentalist, liberal, Procrustean, and legalist.
 
 ## Run locally
 
