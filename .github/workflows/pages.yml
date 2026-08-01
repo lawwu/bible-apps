@@ -1,23 +1,12 @@
 name: Deploy site to Pages
 
+# The apps moved to lawwu/lawrencewu-net (apps/web), served at
+# https://apps.lawrencewu.net. This workflow now deploys only the
+# redirect pages so old GitHub Pages links keep working.
+
 on:
   push:
     branches: ["main"]
-    paths:
-      - "index.html"
-      - "shared/**"
-      - "verse-explorer/**"
-      - "kings-timeline/**"
-      - "translation-tree/**"
-      - "denomination-tree/**"
-      - "translations/**"
-      - "church-map/**"
-      - "romans-road/**"
-      - "preached/**"
-      - "living-word/**"
-      - "christian-book-index/**"
-      - "theological-triage/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -37,24 +26,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Assemble site
+      - name: Assemble redirect-only site
         run: |
           mkdir dist
-          cp index.html dist/
-          cp -r shared dist/
-          cp -r verse-explorer dist/
-          cp -r kings-timeline dist/
-          cp -r translation-tree dist/
-          cp -r denomination-tree dist/
-          cp -r translations dist/
-          cp -r church-map dist/
-          cp -r romans-road dist/
-          cp -r preached dist/
-          cp -r living-word dist/
-          cp -r christian-book-index dist/
-          cp -r theological-triage dist/
-          # build tooling isn't part of the site
-          rm -rf dist/*/scripts dist/church-map/scraper dist/church-map/sources dist/translations/sources
+          cp index.html 404.html dist/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

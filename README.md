@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **This repository is deprecated (August 2026).** The apps moved into the
+> [`lawrencewu-net`](https://github.com/lawwu/lawrencewu-net) monorepo, under `apps/web/`.
+> Use the apps at <https://apps.lawrencewu.net>. Old GitHub Pages links redirect there.
+> This repository is archived and read-only.
+
 # Bible apps
 
 Small explorations in the data of Scripture — its cross-references, topics,
